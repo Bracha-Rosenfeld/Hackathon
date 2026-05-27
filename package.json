@@ -5,5 +5,25 @@
     "express": "^5.2.1",
     "mysql": "^2.18.1",
     "mysql2": "^3.22.4"
-  }
+  },
+  "name": "hackathon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "db.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bracha-Rosenfeld/Hackathon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bracha-Rosenfeld/Hackathon/issues"
+  },
+  "homepage": "https://github.com/Bracha-Rosenfeld/Hackathon#readme"
 }
