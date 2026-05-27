@@ -1,60 +1,41 @@
-import express from "express";
-import { db } from "../db/db.js";
+// server/server.js
+import express from 'express';
+import cors from 'cors';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ייבוא הפונקציות מהקונטרולר המסודר שיצרנו!
+import { login, register, updateCompany } from './controllers/authController.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(cors());
 app.use(express.json());
-import {
-  getCompanyUsers,
-  getUserById,
-  createUser,
-  updateUser,
-} from "../controllers/usersController.js";
 
-import {
-  sendEmailsToCompanyUsers,
-} from "../controllers/emailController.js";
+// פתיחת גישה לתמונות הלוגו שהועלו
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get("/", async (req, res) => {
-  const [rows] = await db.query("SELECT NOW()");
-  res.send(rows);
+// הגדרת Multer לשמירת קבצים בתיקיית uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, './uploads/'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
-// Get all users for a specific company
-app.get(
-  "/api/users/:companyId",
-  getCompanyUsers
-);
+const upload = multer({ storage });
 
-// Get single user by ID
-app.get(
-  "/api/users/:id",
-  getUserById
-);
+// --- הראוטים (Routes) של האפליקציה ---
 
-// Create user
-app.post(
-  "/api/users",
-  createUser
-);
+// ראוט הרשמה - מקבל גם קבצים (לוגו ו-CSV) ומפנה לפונקציה בקונטרולר
+app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), register);
 
-// Update user basic info
-app.put(
-  "/api/users/:id",
-  updateUser  
-);
+// ראוט התחברות
+app.post('/api/auth/login', login);
 
+// ראוט עדכון פרטי חברה
+app.put('/api/company/:id', updateCompany);
 
-
-
-// ======================================================
-// EMAILS
-// ======================================================
-
-// Send personalized emails to all users
-app.post(
-  "/api/send-emails/:companyId",
-  sendEmailsToCompanyUsers  
-);
-
-app.listen(3000, () => {
-  console.log("server running");
-});
+// הרצת השרת
+const PORT = 5000;
+app.listen(PORT, () => console.log(`🚀 השרת רץ בצורה מסודרת על פורט ${PORT}`));

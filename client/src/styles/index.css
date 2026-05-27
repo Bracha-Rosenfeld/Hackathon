@@ -1,0 +1,248 @@
+/* client/src/index.css */
+
+/* ייבוא פונט מודרני ונקי בעברית */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+
+:root {
+  /* פלטת הצבעים היוקרתית של Raise Right - טורקיז, ירוק פיננסי וכחול עמוק */
+  --primary-gradient: linear-gradient(135deg, #1094A9 0%, #0AA8A7 50%, #5CB85C 100%);
+  --bg-dark: #0f172a;
+  --panel-bg: rgba(255, 255, 255, 0.98);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --accent-teal: #1094A9;
+  --accent-green: #5CB85C;
+  --error-red: #ef4444;
+}
+
+/* הגדרות כלליות לאתר */
+body {
+  margin: 0;
+  font-family: 'Assistant', sans-serif;
+  background: var(--bg-dark);
+  /* רקע דינמי מעורר השראה עם הילת צבעים עדינה ברקע */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(16, 148, 169, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(92, 184, 92, 0.15) 0px, transparent 50%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  direction: rtl; /* תמיכה מלאה בכתיבה מימין לשמאל */
+  color: var(--text-main);
+}
+
+/* הפאנל המרכזי של האפליקציה (Glassmorphism) */
+.auth-container {
+  background: var(--panel-bg);
+  padding: 3rem 2.5rem;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* עיצוב כותרת המותג העליונה (הלוגו) */
+.brand-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.brand-logo-text {
+  font-size: 2.8rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+
+.brand-tagline {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* כותרות המסכים הפנימיים */
+h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #0f172a;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+/* שדות הטפסים (Inputs) */
+.form-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group textarea {
+  padding: 0.85rem 1.2rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  background: #f8fafc;
+}
+
+/* אפקט פוקוס יפהפה כשלוחצים על שדה */
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--accent-teal);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(16, 148, 169, 0.12);
+}
+
+/* עיצוב שדות העלאת קבצים (לוגו ו-CSV) */
+.form-group input[type="file"] {
+  background: #f1f5f9;
+  padding: 0.6rem;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* בחירת צבע חברה */
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  background: #f8fafc;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+}
+
+.color-picker-wrapper input[type="color"] {
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+
+/* כפתור מרכזי מעוצב */
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  padding: 0.95rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 18px rgba(16, 148, 169, 0.25);
+  margin-top: 0.5rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 148, 169, 0.35);
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* הודעות שגיאה אדומות ובולטות */
+.error-message {
+  background: #fef2f2;
+  color: var(--error-red);
+  padding: 0.85rem 1.2rem;
+  border-radius: 10px;
+  border-right: 4px solid var(--error-red);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  animation: shake 0.4s ease-in-out;
+}
+
+/* קישורי מעבר בין לוגין להרשמה */
+.toggle-link {
+  text-align: center;
+  margin-top: 1.8rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.toggle-link span {
+  color: var(--accent-teal);
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+  margin-right: 4px;
+  transition: color 0.2s;
+}
+
+.toggle-link span:hover {
+  color: #0aa8a7;
+  text-decoration: underline;
+}
+
+/* --- דאשבורד ודף הבית של החברה --- */
+.dashboard-card {
+  text-align: center;
+}
+
+.company-logo-preview {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  margin: 0 auto 1.5rem auto;
+  display: block;
+}
+
+.dashboard-card p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0.8rem 0;
+  text-align: right;
+}
+
+/* אנימציות חלקות לחוויית משתמש מדהימה */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
