@@ -1,10 +1,13 @@
 // client/src/components/Home.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function Home({ company, onNavigateToEdit }) {
-  // פונקציית התנתקות פשוטה שמחזירה אותנו ללוגין על ידי רענון עדין או איפוס
-  const handleLogout = () => {
-    window.location.reload(); // הדרך המהירה והבטוחה ב-Hackathon לאפס את כל הסטייט של האפליקציה מאפס
+export default function Home({ company, onNavigateToEdit, onLogout }) {
+  const navigate = useNavigate();
+
+  const handleLogoutClick = () => {
+    onLogout(); // 1. מנקה את המידע של המשתמש ב-App.jsx
+    navigate('/login'); // 2. מעביר את הדפדפן לעמוד הלוגין בצורה חלקה
   };
 
   return (
@@ -12,7 +15,7 @@ export default function Home({ company, onNavigateToEdit }) {
       
       {/* כפתור התנתקות מעוצב בראש הכרטיס */}
       <button 
-        onClick={handleLogout}
+        onClick={handleLogoutClick}
         style={{
           position: 'absolute',
           top: '-20px',
@@ -24,8 +27,11 @@ export default function Home({ company, onNavigateToEdit }) {
           borderRadius: '8px',
           cursor: 'pointer',
           fontSize: '0.85rem',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          transition: 'background 0.2s'
         }}
+        onMouseOver={(e) => e.target.style.background = '#dc2626'}
+        onMouseOut={(e) => e.target.style.background = '#ef4444'}
       >
         התנתק ↩
       </button>

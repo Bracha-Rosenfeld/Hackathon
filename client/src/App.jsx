@@ -1,50 +1,89 @@
+// client/src/App.jsx
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import Home from './components/Home';
 import EditProfile from './components/EditProfile';
 
-export default function App() {
-  const [view, setView] = useState('login'); // מצבים אפשריים: login | register | home | edit
-  const [userCompany, setUserCompany] = useState(null); // ישמור את נתוני החברה המחוברת
+function AppContent({ userCompany, setUserCompany }) {
+  const navigate = useNavigate();
 
   return (
     <div className="auth-container">
       {/* לוגו האתר הקבוע והמעוצב בראש הפאנל */}
       <div className="brand-header">
-        <div className="brand-logo-text">RAISE RIGHT</div>
+        <div className="brand-logo-text" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+          RAISE RIGHT
+        </div>
         <div className="brand-tagline">Personalized. Precise. Impact.</div>
       </div>
 
-      {/* ניתוב חכם בין הקומפוננטות השונות בהתאם לסטייט */}
-      {view === 'login' && (
-        <Login 
-          onLoginSuccess={(company) => { setUserCompany(company); setView('home'); }} 
-          onSwitchToRegister={() => setView('register')} 
+      {/* ראוטינג אמיתי מבוסס URL */}
+      <Routes>
+        {/* דף ברירת מחדל - אם מחובר הולך לבית, אם לא ללוגין */}
+        <Route path="/" element={userCompany ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+        
+        <Route 
+          path="/login" 
+          element={
+            <Login 
+              onLoginSuccess={(company) => { setUserCompany(company); navigate('/dashboard'); }} 
+              onSwitchToRegister={() => navigate('/register')} 
+            />
+          } 
         />
-      )}
-
-      {view === 'register' && (
-        <Register 
-          onRegisterSuccess={() => setView('login')} 
-          onSwitchToLogin={() => setView('login')} 
+        
+        <Route 
+          path="/register" 
+          element={
+            <Register 
+              onRegisterSuccess={() => navigate('/login')} 
+              onSwitchToLogin={() => navigate('/login')} 
+            />
+          } 
         />
-      )}
-
-      {view === 'home' && userCompany && (
-        <Home 
-          company={userCompany} 
-          onNavigateToEdit={() => setView('edit')} 
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            userCompany ? (
+              <Home 
+                company={userCompany} 
+                onNavigateToEdit={() => navigate('/edit')} 
+                onLogout={() => setUserCompany(null)} // איפוס הסטייט של החברה בזמן התנתקות
+              />
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
         />
-      )}
-
-      {view === 'edit' && userCompany && (
-        <EditProfile 
-          company={userCompany} 
-          onUpdateSuccess={(updatedCompany) => { setUserCompany(updatedCompany); setView('home'); }} 
-          onCancel={() => setView('home')} 
+        
+        <Route 
+          path="/edit" 
+          element={
+            userCompany ? (
+              <EditProfile 
+                company={userCompany} 
+                onUpdateSuccess={(updatedCompany) => { setUserCompany(updatedCompany); navigate('/dashboard'); }} 
+                onCancel={() => navigate('/dashboard')} 
+              />
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
         />
-      )}
+      </Routes>
     </div>
+  );
+}
+
+export default function App() {
+  const [userCompany, setUserCompany] = useState(null);
+
+  return (
+    <Router>
+      <AppContent userCompany={userCompany} setUserCompany={setUserCompany} />
+    </Router>
   );
 }

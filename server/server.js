@@ -6,8 +6,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // ייבוא הפונקציות מהקונטרולר המסודר שיצרנו!
-import { login, register, updateCompany } from './controllers/authController.js';
-
+import { login, register} from './controllers/authController.js';
+import { updateCompany } from './controllers/companyController.js'; 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
