@@ -16,8 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // פתיחת גישה לתמונות הלוגו שהועלו
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // הגדרת Multer לשמירת קבצים בתיקיית uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
@@ -34,8 +33,10 @@ app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile
 app.post('/api/auth/login', login);
 
 // ראוט עדכון פרטי חברה
-app.put('/api/company/:id', updateCompany);
+// server/server.js
 
+// עדכני את השורה הזו כדי שגם העדכון ידע לקבל קבצים:
+app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), updateCompany);
 // הרצת השרת
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 השרת רץ בצורה מסודרת על פורט ${PORT}`));
