@@ -5,23 +5,36 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Home from './components/Home';
 import EditProfile from './components/EditProfile';
+import CreateCampaign from './components/CreateCampaign';
+
+// 1. מייבאים את הלוגו החדש ששמרת בתיקיית assets
+import logo from './assets/logo.png';
 
 function AppContent({ userCompany, setUserCompany }) {
   const navigate = useNavigate();
 
   return (
     <div className="auth-container">
-      {/* לוגו האתר הקבוע והמעוצב בראש הפאנל */}
-      <div className="brand-header">
-        <div className="brand-logo-text" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          RAISE RIGHT
-        </div>
-        <div className="brand-tagline">Personalized. Precise. Impact.</div>
+      
+      {/* 2. במקום כותרת הטקסט הישנה - שמנו את הלוגו הגרפי המלא */}
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <img 
+          src={logo} 
+          alt="Raise Right" 
+          onClick={() => navigate('/')} 
+          style={{ 
+            maxWidth: '260px', 
+            width: '100%', 
+            height: 'auto', 
+            cursor: 'pointer',
+            display: 'block',
+            margin: '0 auto'
+          }} 
+        />
       </div>
 
-      {/* ראוטינג אמיתי מבוסס URL */}
+      {/* הראוטינג של האפליקציה */}
       <Routes>
-        {/* דף ברירת מחדל - אם מחובר הולך לבית, אם לא ללוגין */}
         <Route path="/" element={userCompany ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         
         <Route 
@@ -51,7 +64,7 @@ function AppContent({ userCompany, setUserCompany }) {
               <Home 
                 company={userCompany} 
                 onNavigateToEdit={() => navigate('/edit')} 
-                onLogout={() => setUserCompany(null)} // איפוס הסטייט של החברה בזמן התנתקות
+                onLogout={() => setUserCompany(null)} 
               />
             ) : (
               <Navigate to="/login" />
@@ -68,6 +81,17 @@ function AppContent({ userCompany, setUserCompany }) {
                 onUpdateSuccess={(updatedCompany) => { setUserCompany(updatedCompany); navigate('/dashboard'); }} 
                 onCancel={() => navigate('/dashboard')} 
               />
+            ) : (
+              <Navigate to="/login" />
+            )
+          } 
+        />
+
+        <Route 
+          path="/create-campaign" 
+          element={
+            userCompany ? (
+              <CreateCampaign company={userCompany} />
             ) : (
               <Navigate to="/login" />
             )
