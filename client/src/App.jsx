@@ -7,29 +7,41 @@ import Home from './components/Home';
 import EditProfile from './components/EditProfile';
 import CreateCampaign from './components/CreateCampaign';
 
-// 1. מייבאים את הלוגו החדש ששמרת בתיקיית assets
+// מייבאים את הלוגו החדש ששמרת בתיקיית assets
 import logo from './assets/logo.png';
 
 function AppContent({ userCompany, setUserCompany }) {
   const navigate = useNavigate();
 
+  // פונקציה שמנתבת באופן חכם לפי מצב החיבור של המשתמשת
+  const handleLogoClick = () => {
+    if (userCompany) {
+      navigate('/dashboard'); // אם היא מחוברת - חוזר לדאשבורד הראשי
+    } else {
+      navigate('/login'); // אם היא לא מחוברת - חוזר למסך החיבור
+    }
+  };
+
   return (
     <div className="auth-container">
       
-      {/* 2. במקום כותרת הטקסט הישנה - שמנו את הלוגו הגרפי המלא */}
+      {/* הלוגו שיופיע תמיד בראש כל הדפים באפליקציה */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <img 
           src={logo} 
           alt="Raise Right" 
-          onClick={() => navigate('/')} 
+          onClick={handleLogoClick} // שימוש בפונקציית הניתוב החכמה
           style={{ 
             maxWidth: '260px', 
             width: '100%', 
             height: 'auto', 
             cursor: 'pointer',
             display: 'block',
-            margin: '0 auto'
+            margin: '0 auto',
+            transition: 'transform 0.2s ease' // אפקט קטן ועדין כשעומדים על הלוגו
           }} 
+          onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
+          onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
         />
       </div>
 

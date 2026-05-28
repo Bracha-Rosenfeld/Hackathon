@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 // ייבוא הפונקציות מהקונטרולר המסודר שיצרנו!
 import { login, register} from './controllers/authController.js';
 import { updateCompany } from './controllers/companyController.js'; 
+import { createCampaign } from './controllers/campaignController.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -37,6 +39,9 @@ app.post('/api/auth/login', login);
 
 // עדכני את השורה הזו כדי שגם העדכון ידע לקבל קבצים:
 app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), updateCompany);
+
+// 2. באזור ה-Routes של האפליקציה (איפה שיושבים הראוטים של ה-auth וה-company)
+app.post('/api/campaigns/create', createCampaign);
 // הרצת השרת
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 השרת רץ בצורה מסודרת על פורט ${PORT}`));
