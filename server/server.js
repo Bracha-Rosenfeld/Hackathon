@@ -7,7 +7,8 @@ import { fileURLToPath } from 'url';
 
 // ייבוא הפונקציות מהקונטרולר המסודר שיצרנו!
 import { login, register} from './controllers/authController.js';
-import { updateCompany } from './controllers/companyController.js'; 
+import { updateCompany } from './controllers/companyController.js';
+import { getDonorCommunicationProfile } from './controllers/aiController.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -31,6 +32,9 @@ app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile
 
 // ראוט התחברות
 app.post('/api/auth/login', login);
+
+// ראוט AI - קבלת פרופיל תקשורת לתורם
+app.post('/api/ai/predict', getDonorCommunicationProfile);
 
 // ראוט עדכון פרטי חברה
 // server/server.js
