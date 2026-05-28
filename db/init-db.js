@@ -70,5 +70,17 @@ await db.query(`
   )
 `);
 
+// 5. טבלת קמפיינים (חדש עבור יצירת קמפיין חכם)
+await db.query(`
+  CREATE TABLE campaigns (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    campaign_name VARCHAR(255) NOT NULL,
+    campaign_goal TEXT NOT NULL,
+    funding_target DECIMAL(15, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+  )
+`);
 console.log("🚀 מסד הנתונים אותחל ועודכן בהצלחה מלאה!");
 await db.end();
