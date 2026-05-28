@@ -82,5 +82,27 @@ await db.query(`
     FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
   )
 `);
+
+await db.query(`
+CREATE TABLE personalized_landings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+
+  token VARCHAR(255) UNIQUE NOT NULL,
+
+  donor_email VARCHAR(255),
+
+  personalized_email TEXT,
+
+  suggested_color VARCHAR(7),
+
+  style_name VARCHAR(255),
+
+  option1 INT,
+  option2 INT,
+  option3 INT,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+`);
 console.log("🚀 מסד הנתונים אותחל ועודכן בהצלחה מלאה!");
 await db.end();
