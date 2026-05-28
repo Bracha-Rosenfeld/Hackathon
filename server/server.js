@@ -9,7 +9,6 @@ import { fileURLToPath } from 'url';
 import { login, register } from './controllers/authController.js';
 import { updateCompany } from './controllers/companyController.js'; 
 import { createCampaign } from './controllers/campaignController.js';
-import { personalizeCampaignData } from './controllers/campaignPersonalizerController.js';
 import { getLandingData } from './controllers/landingController.js';
 // הייבוא של הקונטרולר החדש והייחודי שלנו!
 import { handleDonorAnalysisRequest } from "./controllers/donorAnalysisController.js";
@@ -47,9 +46,6 @@ app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }
 
 // ראוט יצירת קמפיין רגיל
 app.post('/api/campaigns/create', createCampaign);
-
-// הראוט להתאמה אישית ואופטימיזציה של קמפיין מול ה-AI!
-app.post('/api/campaign-personalizer/personalize', personalizeCampaignData);
 
 // נקודת קצה נוספת, למקרה שתרצי לפנות ישירות בשם מפורש
 app.post("/api/donor/analyze-profile", handleDonorAnalysisRequest);

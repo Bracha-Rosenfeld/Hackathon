@@ -21,6 +21,7 @@ await db.query(`DROP TABLE IF EXISTS user_companies`);
 await db.query(`DROP TABLE IF EXISTS donors`);
 await db.query(`DROP TABLE IF EXISTS users`);
 await db.query(`DROP TABLE IF EXISTS companies`);
+await db.query(`DROP TABLE IF EXISTS personalized_landings`);
 
 // 3. מחזירים את בדיקת ה-Foreign Keys לפעולה
 await db.query(`SET FOREIGN_KEY_CHECKS = 1`);

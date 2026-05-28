@@ -1,5 +1,5 @@
 // client/src/components/EditProfile.jsx
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 export default function EditProfile({ company, onUpdateSuccess, onCancel }) {
   const [aboutText, setAboutText] = useState(company.about_text || '');
