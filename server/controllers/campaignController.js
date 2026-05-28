@@ -134,8 +134,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 const landingLink = `http://localhost:5173/landing/${token}`;
                 console.log(`✅ לינק נוצר בהצלחה עבור ${donor.email}: ${landingLink}`);
 
-                landingLinks.push({ email: donor.email, link: landingLink });
-
+landingLinks.push({ 
+    name: donorName || 'תורם ללא שם', 
+    email: donor.email, 
+    link: landingLink 
+});
             } catch (innerError) {
                 console.error(`❌ שגיאה ביצירת דף מותאם עבור ${donor.email}:`, innerError.message);
             }
