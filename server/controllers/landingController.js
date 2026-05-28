@@ -1,5 +1,4 @@
-import { db } from '../db/db.js';
-
+import {db} from "../../db/db.js";
 export const getLandingData = async (req, res) => {
   try {
     const { token } = req.params;

@@ -52,7 +52,7 @@ export const createCampaign = async (req, res) => {
 
     // החזרת תשובה מוצלחת רק כשהכול מסתיים
     return res.status(201).json({
-      success: true,
+      success: true,    
       message: 'הקמפיין נוצר והאייגנטים סיימו את עבודתם בהצלחה!',
       campaignId: newCampaignId
     });

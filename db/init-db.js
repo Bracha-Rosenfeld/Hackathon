@@ -11,15 +11,24 @@ const db = await mysql.createConnection({
 });
 
 console.log("🧹 מוחק טבלאות ישנות אם הן קיימות...");
-// מחיקה בסדר נכון כדי למנוע שגיאות Foreign Key
+
+// 1. מכבים זמנית את בדיקת ה-Foreign Keys כדי לאפשר מחיקה חלקה
+await db.query(`SET FOREIGN_KEY_CHECKS = 0`);
+
+// 2. מחיקת כל הטבלאות (כולל טבלת campaigns החדשה שלא הייתה ברשימה מקודם)
+await db.query(`DROP TABLE IF EXISTS campaigns`);
 await db.query(`DROP TABLE IF EXISTS user_companies`);
 await db.query(`DROP TABLE IF EXISTS donors`);
 await db.query(`DROP TABLE IF EXISTS users`);
 await db.query(`DROP TABLE IF EXISTS companies`);
 
+// 3. מחזירים את בדיקת ה-Foreign Keys לפעולה
+await db.query(`SET FOREIGN_KEY_CHECKS = 1`);
+
+
 console.log("🛠️ יוצר את הטבלאות החדשות והמעודכנות...");
 
-// 1. טבלת חברות (כולל השדות החדשים לרישום, לוגו וצבע)
+// 1. טבלת חברות
 await db.query(`
   CREATE TABLE companies (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,7 +41,7 @@ await db.query(`
   )
 `);
 
-// 2. טבלת משתמשים (הטבלה המקורית שלך)
+// 2. טבלת משתמשים
 await db.query(`
   CREATE TABLE users (
     id INT PRIMARY KEY,
@@ -58,7 +67,7 @@ await db.query(`
   )
 `);
 
-// 4. טבלת תורמים (עבור קובצי ה-CSV שהחברות יעלו)
+// 4. טבלת תורמים
 await db.query(`
   CREATE TABLE donors (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -70,7 +79,7 @@ await db.query(`
   )
 `);
 
-// 5. טבלת קמפיינים (חדש עבור יצירת קמפיין חכם)
+// 5. טבלת קמפיינים
 await db.query(`
   CREATE TABLE campaigns (
     id INT AUTO_INCREMENT PRIMARY KEY,

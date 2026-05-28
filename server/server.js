@@ -39,8 +39,8 @@ app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile
 // ראוט התחברות
 app.post('/api/auth/login', login);
 
-// ראוט AI - קבלת פרופיל תקשורת לתורם
-app.post('/api/ai/predict', getDonorCommunicationProfile);
+// --- התיקון כאן: החלפנו את המשתנה החסר בקונטרולר החדש והעובד! ---
+app.post('/api/ai/predict', handleDonorAnalysisRequest);
 
 // ראוט עדכון פרטי חברה
 app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), updateCompany);
@@ -51,10 +51,12 @@ app.post('/api/campaigns/create', createCampaign);
 // הראוט להתאמה אישית ואופטימיזציה של קמפיין מול ה-AI!
 app.post('/api/campaign-personalizer/personalize', personalizeCampaignData);
 
-// (אופציונלי) נקודת קצה נוספת, למקרה שתרצי לפנות ישירות בשם מפורש
+// נקודת קצה נוספת, למקרה שתרצי לפנות ישירות בשם מפורש
 app.post("/api/donor/analyze-profile", handleDonorAnalysisRequest);
 
+// ראוט דף נחיתה
 app.get('/api/landing/:token', getLandingData);
+
 // הרצת השרת
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 השרת רץ בצורה מסודרת על פורט ${PORT}`));
