@@ -11,7 +11,8 @@ import { updateCompany } from './controllers/companyController.js';
 import { createCampaign } from './controllers/campaignController.js';
 // הייבוא החדש של קונטרולר ההתאמה האישית!
 import { personalizeCampaignData } from './controllers/campaignPersonalizerController.js';
-
+import { generateCampaignAgentData } from './services/aiService.js'; 
+// במקרה שהיא נמצאת בתיקייה אחרת, עדכני את הנתיב בהתאם (למשל './controllers/aiController.js')
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -37,7 +38,7 @@ app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile
 app.post('/api/auth/login', login);
 
 // ראוט AI - קבלת פרופיל תקשורת לתורם
-app.post('/api/ai/predict', getDonorCommunicationProfile);
+app.post('/api/ai/predict', generateCampaignAgentData);
 
 // ראוט עדכון פרטי חברה
 app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), updateCompany);

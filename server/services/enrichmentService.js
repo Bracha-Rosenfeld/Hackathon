@@ -222,6 +222,7 @@ export async function enrichDonors(donors) {
 
   for (const donor of donors) {
     const enriched = await enrichPerson(donor);
+    console.log(`✅ Finished enriching ${donor.fullName}`);
     results.push(enriched);
   }
 

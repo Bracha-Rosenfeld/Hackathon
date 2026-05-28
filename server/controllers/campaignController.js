@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-
+import { processCampaignDonors } from "../services/campaignProcessingService.js";
 // חיבור ל-DB (מומלץ בעתיד לייבא מקובץ db.js המרכזי שלכן)
 const dbConfig = {
   host: process.env.MYSQLHOST,
@@ -34,8 +34,21 @@ export const createCampaign = async (req, res) => {
 
     // 2. קריאה זמנית לפונקציית האייגנטים (נבנה אותה בשלב הבא)
     // כאן בעתיד תייבאו ותפעילו את פונקציית האייגנטים שלכן מה-Services
-    console.log("🤖 מפעיל את צוות האייגנטים לעיבוד הנתונים...");
-    await new Promise(resolve => setTimeout(resolve, 4000)); // סימולציה זמנית של ריצת האייגנטים
+    console.log("🤖 מפעיל עיבוד תורמים...");
+
+    const campaignData = {
+      campaignId: newCampaignId,
+      campaignName,
+      campaignGoal,
+      fundingTarget,
+      companyId
+    };
+
+    const processingResult = await processCampaignDonors(
+      connection,
+      companyId,
+      campaignData
+    );
 
     // החזרת תשובה מוצלחת רק כשהכול מסתיים
     return res.status(201).json({
