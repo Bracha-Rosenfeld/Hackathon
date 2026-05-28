@@ -22,7 +22,7 @@ export default function LandingPage() {
 
   // מערך של סכומי התרומה (מסנן אפשרויות ריקות במידה ויש)
   const donationOptions = [data.option1, data.option2, data.option3].filter(Boolean);
-  
+
   // צבע המותג המותאם אישית (או צבע גיבוי)
   const brandColor = data.suggested_color || '#3b5a9a';
 
@@ -39,7 +39,7 @@ export default function LandingPage() {
       }}
     >
       {/* אזור הלוגו (Header) מבוסס על הפרמטר מהדאטא */}
-      {data.logo_url && (
+      {data.company_logo && (
         <div style={{
           width: '100%',
           backgroundColor: 'white',
@@ -48,10 +48,10 @@ export default function LandingPage() {
           boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
           marginBottom: '40px'
         }}>
-          <img 
-            src={data.logo_url} 
-            alt="לוגו הארגון" 
-            style={{ height: '70px', objectFit: 'contain' }} 
+          <img
+            src={data.company_logo}
+            alt="לוגו הארגון"
+            style={{ height: '70px', objectFit: 'contain' }}
           />
         </div>
       )}
@@ -72,14 +72,14 @@ export default function LandingPage() {
         }}
       >
         {/* פנייה אישית בשם */}
-        {data.name && (
-          <h2 style={{ 
-            fontSize: '26px', 
-            color: brandColor, 
+        {data.donor_name && (
+          <h2 style={{
+            fontSize: '26px',
+            color: brandColor,
             marginBottom: '10px',
             marginTop: '0'
           }}>
-            שלום {data.name},
+            שלום {data.donor_name},
           </h2>
         )}
 
@@ -111,7 +111,7 @@ export default function LandingPage() {
               gap: '15px',
               justifyContent: 'center',
               flexWrap: 'wrap',
-              flexDirection: 'row-reverse' // עוזר לסידור נכון במסכים קטנים בעברית
+              flexDirection: 'row-reverse'
             }}
           >
             {donationOptions.map((amount, index) => (

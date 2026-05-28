@@ -101,6 +101,12 @@ CREATE TABLE personalized_landings (
 
   donor_email VARCHAR(255),
 
+  donor_name VARCHAR(255),
+
+  company_name VARCHAR(255),
+
+  company_logo VARCHAR(255),
+
   personalized_email TEXT,
 
   suggested_color VARCHAR(7),
@@ -108,7 +114,9 @@ CREATE TABLE personalized_landings (
   style_name VARCHAR(255),
 
   option1 INT,
+
   option2 INT,
+
   option3 INT,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
