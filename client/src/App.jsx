@@ -6,7 +6,7 @@ import Register from './components/Register';
 import Home from './components/Home';
 import EditProfile from './components/EditProfile';
 import CreateCampaign from './components/CreateCampaign';
-
+import LandingPage from './components/LandingPage';
 // מייבאים את הלוגו החדש ששמרת בתיקיית assets
 import logo from './assets/logo.png';
 
@@ -109,6 +109,7 @@ function AppContent({ userCompany, setUserCompany }) {
             )
           } 
         />
+        <Route path="/landing/:token" element={<LandingPage />} />
       </Routes>
     </div>
   );

@@ -10,6 +10,9 @@ import { login, register } from './controllers/authController.js';
 import { updateCompany } from './controllers/companyController.js'; 
 import { createCampaign } from './controllers/campaignController.js';
 import { personalizeCampaignData } from './controllers/campaignPersonalizerController.js';
+import { getLandingData } from './controllers/landingController.js';
+// הייבוא של הקונטרולר החדש והייחודי שלנו!
+import { handleDonorAnalysisRequest } from "./controllers/donorAnalysisController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +54,7 @@ app.post('/api/campaign-personalizer/personalize', personalizeCampaignData);
 // (אופציונלי) נקודת קצה נוספת, למקרה שתרצי לפנות ישירות בשם מפורש
 app.post("/api/donor/analyze-profile", handleDonorAnalysisRequest);
 
+app.get('/api/landing/:token', getLandingData);
 // הרצת השרת
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 השרת רץ בצורה מסודרת על פורט ${PORT}`));
