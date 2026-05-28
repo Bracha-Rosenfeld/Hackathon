@@ -3,6 +3,9 @@ import { processCampaignDonors } from "../services/campaignProcessingService.js"
 import { generateCampaignAgentData } from '../services/aiService.js';
 import { db } from "../../db/db.js"; // שימוש בחיבור ה-DB הגלובלי של הפרויקט
 
+// פונקציית עזר להשהיה (Sleep) כדי למנוע חריגה ממגבלות ה-API
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const createCampaign = async (req, res) => {
     try {
         const { campaignName, campaignGoal, fundingTarget, companyId } = req.body;
@@ -21,6 +24,7 @@ export const createCampaign = async (req, res) => {
 
         const newCampaignId = result.insertId;
         console.log(`✅ הקמפיין נשמר ב-DB בהצלחה. מזהה קמפיין: ${newCampaignId}`);
+        
         // שליפת פרטי החברה
         const [companyRows] = await db.query(
             `
@@ -39,9 +43,9 @@ export const createCampaign = async (req, res) => {
         }
 
         const companyDataFromDb = companyRows[0];
-
         const companyNameFromDb = companyDataFromDb.company_name;
         const companyLogoFromDb = companyDataFromDb.logo_path;
+        
         // 2. קריאה לפונקציית האייגנטים לקבלת נתוני אישיות ופיננסים
         console.log("🤖 מפעיל עיבוד תורמים (שלב 1: העשרה וניתוח)...");
 
@@ -64,6 +68,7 @@ export const createCampaign = async (req, res) => {
         console.log("🎨 מפעיל יצירת דפי נחיתה מותאמים אישית (שלב 2)...");
 
         const landingLinks = [];
+        let isFirstDonor = true; // משתנה כדי שלא נמתין סתם לפני התורם הראשון
 
         for (const donor of processingResult) {
             if (!donor.personalityProfile || !donor.financialProfile) {
@@ -71,7 +76,16 @@ export const createCampaign = async (req, res) => {
                 continue;
             }
 
+            // קצב ה-API בחינם מוגבל ל-5 בקשות בדקה. 
+            // ממתינים 12 שניות בין תורם לתורם (החל מהתורם השני).
+            if (!isFirstDonor) {
+                console.log(`⏳ ממתין 12 שניות כדי להימנע מחסימת Rate Limit של Gemini...`);
+                await delay(12000);
+            }
+            isFirstDonor = false;
+
             console.log(`⏳ יוצר קמפיין מותאם עבור: ${donor.email}...`);
+            
             // שליפת שם התורם
             const [donorRows] = await db.query(
                 `
@@ -134,11 +148,11 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 const landingLink = `http://localhost:5173/landing/${token}`;
                 console.log(`✅ לינק נוצר בהצלחה עבור ${donor.email}: ${landingLink}`);
 
-landingLinks.push({ 
-    name: donorName || 'תורם ללא שם', 
-    email: donor.email, 
-    link: landingLink 
-});
+                landingLinks.push({ 
+                    name: donorName || 'תורם ללא שם', 
+                    email: donor.email, 
+                    link: landingLink 
+                });
             } catch (innerError) {
                 console.error(`❌ שגיאה ביצירת דף מותאם עבור ${donor.email}:`, innerError.message);
             }
