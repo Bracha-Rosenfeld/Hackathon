@@ -9,8 +9,10 @@ import { fileURLToPath } from 'url';
 import { login, register } from './controllers/authController.js';
 import { updateCompany } from './controllers/companyController.js'; 
 import { createCampaign } from './controllers/campaignController.js';
-// הייבוא החדש של קונטרולר ההתאמה האישית!
 import { personalizeCampaignData } from './controllers/campaignPersonalizerController.js';
+
+// הייבוא של הקונטרולר החדש והייחודי שלנו!
+import { handleDonorAnalysisRequest } from "./controllers/donorAnalysisController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +23,7 @@ app.use(express.json());
 
 // פתיחת גישה לתמונות הלוגו שהועלו
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // הגדרת Multer לשמירת קבצים בתיקיית uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
@@ -36,8 +39,8 @@ app.post('/api/auth/register', upload.fields([{ name: 'logo' }, { name: 'csvFile
 // ראוט התחברות
 app.post('/api/auth/login', login);
 
-// ראוט AI - קבלת פרופיל תקשורת לתורם
-app.post('/api/ai/predict', getDonorCommunicationProfile);
+// הראוט החדש והמתוקן שמפעיל את ה-AI החינמי של Gemini ומחזיר את הג'ייסונים המתואמים!
+app.post('/api/ai/predict', handleDonorAnalysisRequest);
 
 // ראוט עדכון פרטי חברה
 app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }]), updateCompany);
@@ -45,8 +48,11 @@ app.put('/api/company/:id', upload.fields([{ name: 'logo' }, { name: 'csvFile' }
 // ראוט יצירת קמפיין רגיל
 app.post('/api/campaigns/create', createCampaign);
 
-// הראוט החדש להתאמה אישית ואופטימיזציה של קמפיין מול ה-AI!
+// הראוט להתאמה אישית ואופטימיזציה של קמפיין מול ה-AI!
 app.post('/api/campaign-personalizer/personalize', personalizeCampaignData);
+
+// (אופציונלי) נקודת קצה נוספת, למקרה שתרצי לפנות ישירות בשם מפורש
+app.post("/api/donor/analyze-profile", handleDonorAnalysisRequest);
 
 // הרצת השרת
 const PORT = 5000;
