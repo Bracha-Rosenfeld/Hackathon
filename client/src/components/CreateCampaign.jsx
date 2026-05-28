@@ -14,6 +14,9 @@ export default function CreateCampaign({ company }) {
   // 2. סטייט למצבי האפליקציה (טעינה / הצלחה)
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // סטייט לשמירת הלינקים שחזרו מהשרת
+  const [generatedLinks, setGeneratedLinks] = useState([]);
 
   // עדכון הסטייט בכל שינוי בשדות הקלט
   const handleChange = (e) => {
@@ -21,15 +24,14 @@ export default function CreateCampaign({ company }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 3. פונקציית שליחת הטופס
-// 3. פונקציית שליחת הטופס האמיתית מול ה-Backend
+  // 3. פונקציית שליחת הטופס האמיתית מול ה-Backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsGenerating(true);
 
     try {
       // שליחת הבקשה ל-Backend עם כל הנתונים הנדרשים
-      const response = await fetch('http://localhost:5000/api/campaigns/create', { // ודאי שזה הפורט הנכון של הסרבר שלכן
+      const response = await fetch('http://localhost:5000/api/campaigns/create', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +47,12 @@ export default function CreateCampaign({ company }) {
       const data = await response.json();
 
       if (data.success) {
-        // מעבר למסך הצלחה רק כשהשרת והאייגנטים סיימו בהצלחה
+        // שמירת רשימת הלינקים שהתקבלה מהשרת בסטייט
+        if (data.generatedLinks && Array.isArray(data.generatedLinks)) {
+          setGeneratedLinks(data.generatedLinks);
+        }
+        
+        // מעבר למסך הצלחה
         setIsGenerating(false);
         setIsSuccess(true);
       } else {
@@ -60,17 +67,76 @@ export default function CreateCampaign({ company }) {
   };
 
   return (
-    <div className="dashboard-card" style={{ position: 'relative', padding: '40px 30px' }}>
+    <div className="dashboard-card" style={{ position: 'relative', padding: '40px 30px', direction: 'rtl' }}>
       
-
       {/* --- מצב 1: מסך הצלחה לאחר סיום ריצת האייגנטים --- */}
       {isSuccess ? (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ fontSize: '4rem', marginBottom: '15px' }}>✅</div>
           <h2 style={{ color: '#2ab18a', marginBottom: '10px' }}>קמפיין נשלח בהצלחה!</h2>
           <p style={{ color: '#64748b', marginBottom: '30px' }}>
-            הנתונים נשמרו בהצלחה וצוות סוכני ה-AI סיים לבנות את האסטרטגיה המנצחת.
+            הנתונים נשמרו בהצלחה וצוות סוכני ה-AI סיים לבנות דפי נחיתה מותאמים אישית.
           </p>
+
+          {/* --- רשימת דפי הנחיתה שנוצרו --- */}
+          {generatedLinks.length > 0 && (
+            <div style={{ 
+              backgroundColor: '#f8fafc', 
+              padding: '25px', 
+              borderRadius: '12px', 
+              marginBottom: '30px',
+              textAlign: 'right',
+              border: '1px solid #e2e8f0',
+              maxHeight: '400px',
+              overflowY: 'auto'
+            }}>
+              <h3 style={{ color: '#1e293b', fontSize: '1.1rem', marginBottom: '20px', fontWeight: 'bold' }}>
+                🔗 דפי הנחיתה המותאמים שנוצרו עבור התורמים שלך:
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {generatedLinks.map((item, index) => (
+                  <div key={index} style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    padding: '12px 15px', 
+                    backgroundColor: '#ffffff', 
+                    borderRadius: '8px',
+                    border: '1px solid #edf2f7',
+                    flexWrap: 'wrap',
+                    gap: '10px'
+                  }}>
+                    <div>
+                      <strong style={{ color: '#1e293b', fontSize: '0.95rem' }}>{item.name}</strong>
+                      <span style={{ color: '#64748b', fontSize: '0.85rem', marginRight: '8px' }}>({item.email})</span>
+                    </div>
+                    
+                    <a 
+                      href={item.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      style={{ 
+                        color: '#ffffff', 
+                        backgroundColor: '#2ab18a', 
+                        padding: '6px 14px', 
+                        borderRadius: '6px', 
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseOver={(e) => e.target.style.backgroundColor = '#20878e'}
+                      onMouseOut={(e) => e.target.style.backgroundColor = '#2ab18a'}
+                    >
+                      צפייה בדף הנחיתה ➔
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button className="auth-submit-btn" onClick={() => navigate('/dashboard')}>
             חזרה למסך הבית
           </button>
@@ -79,7 +145,7 @@ export default function CreateCampaign({ company }) {
         /* --- מצב 2: הטופס הראשי (או מצב טעינה) --- */
         <>
           <h2 style={{ marginBottom: '10px' }}>צור קמפיין חדש</h2>
-          <p style={{ textalign: 'center', color: '#64748b', marginBottom: '30px', fontSize: '0.95rem' }}>
+          <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '30px', fontSize: '0.95rem' }}>
             עבור חברת <strong>{company?.company_name}</strong>
           </p>
 
@@ -134,7 +200,6 @@ export default function CreateCampaign({ company }) {
             <div style={{ marginTop: '30px', textAlign: 'center' }}>
               {isGenerating ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                  {/* עיגול מסתובב (Spinner) מבוסס CSS */}
                   <div className="loading-spinner"></div>
                   <p style={{ color: '#20878e', fontWeight: '600', animation: 'pulse 1.5s infinite' }}>
                     שומר נתונים ומפעיל סוכני AI... 🤖
