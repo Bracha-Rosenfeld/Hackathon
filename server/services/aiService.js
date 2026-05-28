@@ -32,12 +32,12 @@ export const generateCampaignAgentData = async (personalityJson, financialJson, 
       --- INPUT DATA ---
       1. Target Personality Analysis: ${JSON.stringify(personalityJson)}
       2. Target Financial Analysis: ${JSON.stringify(financialJson)}
-      3. Campaign Context: Name is "${campaignJson.name}", Goal/Purpose is "${campaignJson.goal}".
+      3. Campaign Context: Name is "${campaignJson.name}", Goal/Purpose is "${campaignJson.goal}","${campaignJson.color}".
 
       --- TASK REQUIREMENTS ---
       - Write the 'personalizedEmail' strictly in Hebrew.
-      - Match the email's tone to the Personality Analysis.
-      - Select a 'suggestedColor' (hex code) that matches the target.
+      - Match the email's tone to the Personality Analysis in a way that will get him to donate the ultimate amount.
+      - Select a 'suggestedColorTheme' (hex code) that matches the target personality and financial profile but is considering the color of the company's branding.
       - Provide a short Hebrew description for 'styleName'.
       - Generate exactly 3 price recommendations inside 'threePriceOptions' based on the Financial Analysis.
     `;
