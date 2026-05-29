@@ -198,7 +198,9 @@ export async function processCampaignDonors(connection, companyId) {
       donationPrediction,
 
       // השדה הישן, כדי לא לשבור קוד קיים
-      financialProfile
+      financialProfile,
+        donorFeatures: donor,
+
     });
   }
 
