@@ -24,9 +24,6 @@ function AppContent({ userCompany, setUserCompany }) {
 
   const isLandingPage = location.pathname.startsWith('/landing/');
 
-  // חשוב:
-  // דף נחיתה יוצא לגמרי מחוץ ל-auth-container
-  // כדי שלא יקבל הגבלות רוחב/מרכוז/לוגו של המערכת
   if (isLandingPage) {
     return (
       <Routes>
@@ -44,119 +41,90 @@ function AppContent({ userCompany, setUserCompany }) {
   };
 
   return (
-    <div
-      className="auth-container"
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        padding: '40px 20px',
-        boxSizing: 'border-box',
-        background: 'linear-gradient(135deg, #eef3f8 0%, #f9fbfd 100%)'
-      }}
-    >
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <img
-          src={logo}
-          alt="Raise Right"
-          onClick={handleLogoClick}
-          style={{
-            maxWidth: '260px',
-            width: '100%',
-            height: 'auto',
-            cursor: 'pointer',
-            display: 'block',
-            margin: '0 auto',
-            transition: 'transform 0.2s ease'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.transform = 'scale(1.02)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        />
-      </div>
+    <main className="app-shell">
+      <div className="app-content">
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            userCompany ? (
-              <Navigate to="/dashboard" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              userCompany ? (
+                <Navigate to="/dashboard" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
 
-        <Route
-          path="/login"
-          element={
-            <Login
-              onLoginSuccess={(company) => {
-                setUserCompany(company);
-                navigate('/dashboard');
-              }}
-              onSwitchToRegister={() => navigate('/register')}
-            />
-          }
-        />
-
-        <Route
-          path="/register"
-          element={
-            <Register
-              onRegisterSuccess={() => navigate('/login')}
-              onSwitchToLogin={() => navigate('/login')}
-            />
-          }
-        />
-
-        <Route
-          path="/dashboard"
-          element={
-            userCompany ? (
-              <Home
-                company={userCompany}
-                onNavigateToEdit={() => navigate('/edit')}
-                onLogout={() => setUserCompany(null)}
-              />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-
-        <Route
-          path="/edit"
-          element={
-            userCompany ? (
-              <EditProfile
-                company={userCompany}
-                onUpdateSuccess={(updatedCompany) => {
-                  setUserCompany(updatedCompany);
+          <Route
+            path="/login"
+            element={
+              <Login
+                onLoginSuccess={(company) => {
+                  setUserCompany(company);
                   navigate('/dashboard');
                 }}
-                onCancel={() => navigate('/dashboard')}
+                onSwitchToRegister={() => navigate('/register')}
               />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
+            }
+          />
 
-        <Route
-          path="/create-campaign"
-          element={
-            userCompany ? (
-              <CreateCampaign company={userCompany} />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-      </Routes>
-    </div>
+          <Route
+            path="/register"
+            element={
+              <Register
+                onRegisterSuccess={() => navigate('/login')}
+                onSwitchToLogin={() => navigate('/login')}
+              />
+            }
+          />
+
+          <Route
+            path="/dashboard"
+            element={
+              userCompany ? (
+                <Home
+                  company={userCompany}
+                  onNavigateToEdit={() => navigate('/edit')}
+                  onLogout={() => setUserCompany(null)}
+                />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+
+          <Route
+            path="/edit"
+            element={
+              userCompany ? (
+                <EditProfile
+                  company={userCompany}
+                  onUpdateSuccess={(updatedCompany) => {
+                    setUserCompany(updatedCompany);
+                    navigate('/dashboard');
+                  }}
+                  onCancel={() => navigate('/dashboard')}
+                />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+
+          <Route
+            path="/create-campaign"
+            element={
+              userCompany ? (
+                <CreateCampaign company={userCompany} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+        </Routes>
+      </div>
+    </main>
   );
 }
 
