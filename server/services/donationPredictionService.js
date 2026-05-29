@@ -13,10 +13,17 @@ function buildDonationModelInput(donor) {
 
     isStudent: donor.isStudent ? 1 : 0,
     isCEO: donor.isCEO ? 1 : 0,
+    isFounder: donor.isFounder ? 1 : 0,
+    isOwner: donor.isOwner ? 1 : 0,
     isCLevel: donor.isCLevel ? 1 : 0,
     isExecutive: donor.isExecutive ? 1 : 0,
     isManager: donor.isManager ? 1 : 0,
+
     isTechRelated: donor.isTechRelated ? 1 : 0,
+    isFinanceRelated: donor.isFinanceRelated ? 1 : 0,
+    isRealEstateRelated: donor.isRealEstateRelated ? 1 : 0,
+    isMedicalRelated: donor.isMedicalRelated ? 1 : 0,
+    isPublicSector: donor.isPublicSector ? 1 : 0,
 
     seniority_level: donor.seniority_level || 0,
     wealth_proxy_score: donor.wealth_proxy_score || 0,
@@ -29,7 +36,7 @@ export async function predictDonationAmounts(donorFeatures) {
   try {
     const modelInput = buildDonationModelInput(donorFeatures);
 
-    console.log("💰 DONATION MODEL INPUT V2:");
+    console.log("💰 DONATION CAPACITY MODEL INPUT V3:");
     console.log(JSON.stringify(modelInput, null, 2));
 
     const response = await axios.post(
@@ -39,9 +46,12 @@ export async function predictDonationAmounts(donorFeatures) {
 
     if (!response.data.success) {
       throw new Error(
-        response.data.error || "Donation model failed"
+        response.data.error || "Donation capacity model failed"
       );
     }
+
+    console.log("💰 DONATION CAPACITY MODEL RESULT V3:");
+    console.log(JSON.stringify(response.data.donationPrediction, null, 2));
 
     return response.data.donationPrediction;
 

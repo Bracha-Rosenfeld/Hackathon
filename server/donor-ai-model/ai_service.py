@@ -8,11 +8,18 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# =========================================================
+# Communication profile model - existing model
+# =========================================================
 model = joblib.load("xgboost_multi_dim_regression_v3.joblib")
 training_columns = joblib.load("training_columns_v3.joblib")
 
-donation_model = joblib.load("donation_amount_model_v2.joblib")
-donation_training_columns = joblib.load("donation_amount_training_columns_v2.joblib")
+# =========================================================
+# Donation capacity model V3 - new model
+# =========================================================
+capacity_model = joblib.load("donation_capacity_model_v3.joblib")
+capacity_training_columns = joblib.load("donation_capacity_columns_v3.joblib")
+
 TARGET_COLS = [
     "emotion_level",
     "professionalism_level",
@@ -75,9 +82,7 @@ DEFAULT_FIELDS = {
 
 def prepare_donor_input(donor):
     """
-    מקבלת תורם עם חלק מהשדות,
-    משלימה שדות חסרים,
-    ומחזירה DataFrame שמתאים בדיוק לעמודות שהמודל למד.
+    Prepares input for the existing communication profile model.
     """
 
     if donor is None:
@@ -107,83 +112,45 @@ def prepare_donor_input(donor):
 
     return df_encoded
 
-def round_to_display_amount(x):
+
+# =========================================================
+# Donation Capacity V3 helpers
+# =========================================================
+
+def score_to_amounts(score, donor=None):
     """
-    מעגל את תחזית המודל לסכומי תרומה יפים להצגה בדף נחיתה.
+    Converts donation capacity score to donation amount options.
+    The model predicts ability/potential, and this function maps it
+    to controlled donation amounts.
     """
-    if x <= 25:
-        return 20
-    elif x <= 45:
-        return 36
-    elif x <= 70:
-        return 50
-    elif x <= 120:
-        return 100
-    elif x <= 220:
-        return 180
-    elif x <= 320:
-        return 250
-    elif x <= 450:
-        return 360
-    elif x <= 650:
-        return 500
-    elif x <= 900:
-        return 750
-    elif x <= 1300:
-        return 1000
-    elif x <= 1800:
-        return 1500
-    elif x <= 2500:
-        return 2000
+    if donor is None:
+        donor = {}
+
+    is_student = donor.get("isStudent", 0) == 1
+
+    if is_student:
+        if score >= 7:
+            return [100, 150, 250]
+        return [50, 80, 120]
+
+    if score >= 9.2:
+        return [1000, 1800, 3000]
+    elif score >= 8.3:
+        return [750, 1200, 1800]
+    elif score >= 7.2:
+        return [500, 750, 1200]
+    elif score >= 6.0:
+        return [360, 500, 750]
+    elif score >= 4.5:
+        return [180, 250, 360]
     else:
-        return 3000
-
-
-DONATION_AMOUNTS = [
-    20, 36, 50, 80, 100, 120, 150, 180,
-    250, 300, 360, 500, 650, 750, 1000,
-    1200, 1500, 1800, 2000, 2500, 3000
-]
-
-
-def nearest_amount(x):
-    return min(DONATION_AMOUNTS, key=lambda amount: abs(amount - x))
-
-
-def build_three_close_options(prediction):
-    """
-    מקבלת חיזוי גולמי של המודל ומחזירה 3 סכומים קרובים והגיוניים.
-    """
-
-    base = prediction[1]
-
-    safe_raw = base * 0.7
-    stretch_raw = base
-    visionary_raw = base * 1.35
-
-    safe = nearest_amount(safe_raw)
-    stretch = nearest_amount(stretch_raw)
-    visionary = nearest_amount(visionary_raw)
-
-    amounts = sorted(list(set([safe, stretch, visionary])))
-
-    while len(amounts) < 3:
-        last = amounts[-1]
-        next_options = [x for x in DONATION_AMOUNTS if x > last]
-
-        if next_options:
-            amounts.append(next_options[0])
-        else:
-            break
-
-    return amounts[:3]
+        return [80, 120, 180]
 
 
 def prepare_donation_input(donor):
     """
-    מקבלת תורם עם חלק מהשדות,
-    משלימה שדות חסרים,
-    ומחזירה DataFrame שמתאים בדיוק לעמודות שמודל התרומות למד.
+    Prepares input for the Donation Capacity Model V3.
+    V3 predicts one value: donation_capacity_score.
     """
 
     if donor is None:
@@ -192,27 +159,29 @@ def prepare_donation_input(donor):
     default_donation_fields = {
         "emailDomainType": "unknown",
         "city_tier": "unknown",
-        "companySizeBucket": "unknown",
 
         "hasLinkedin": 0,
-        "hasBusinessEmail": 0,
-        "hasVerifiedEmail": 0,
-
         "followers": 0,
         "connections": 0,
 
         "isStudent": 0,
         "isCEO": 0,
+        "isFounder": 0,
+        "isOwner": 0,
+        "isCLevel": 0,
         "isExecutive": 0,
         "isManager": 0,
+
         "isTechRelated": 0,
         "isFinanceRelated": 0,
+        "isRealEstateRelated": 0,
+        "isMedicalRelated": 0,
+        "isPublicSector": 0,
 
         "seniority_level": 0,
         "wealth_proxy_score": 0,
         "professional_presence_score": 0,
-        "data_confidence_score": 0,
-        "financialStabilityScore": 0
+        "data_confidence_score": 0
     }
 
     full_donor = default_donation_fields.copy()
@@ -231,14 +200,20 @@ def prepare_donation_input(donor):
 
     df_encoded = pd.get_dummies(df)
 
-    for col in donation_training_columns:
+    for col in capacity_training_columns:
         if col not in df_encoded.columns:
             df_encoded[col] = 0
 
-    df_encoded = df_encoded[donation_training_columns]
+    df_encoded = df_encoded[capacity_training_columns]
     df_encoded = df_encoded.astype(float)
 
     return df_encoded
+
+
+# =========================================================
+# Routes
+# =========================================================
+
 @app.route("/predict", methods=["POST"])
 def predict():
     donor = request.get_json()
@@ -266,7 +241,8 @@ def predict():
         return jsonify({
             "success": False,
             "error": str(e)
-            }), 500
+        }), 500
+
 
 @app.route("/predict-donation", methods=["POST"])
 def predict_donation():
@@ -275,13 +251,17 @@ def predict_donation():
     try:
         df = prepare_donation_input(donor)
 
-        prediction = donation_model.predict(df)[0]
+        prediction = capacity_model.predict(df)[0]
 
-        final_amounts = build_three_close_options(prediction)
+        capacity_score = round(float(prediction), 2)
+        capacity_score = max(1, min(10, capacity_score))
+
+        final_amounts = score_to_amounts(capacity_score, donor)
 
         return jsonify({
             "success": True,
             "donationPrediction": {
+                "capacity_score": capacity_score,
                 "safe_amount": int(final_amounts[0]),
                 "stretch_amount": int(final_amounts[1]),
                 "visionary_amount": int(final_amounts[2]),
@@ -300,7 +280,7 @@ def predict_donation():
             "success": False,
             "error": str(e)
         }), 500
-    
+
 
 @app.route("/health", methods=["GET"])
 def health():
