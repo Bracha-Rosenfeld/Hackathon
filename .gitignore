@@ -46,3 +46,5 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+# AI model files
+server/donor-ai-model/*.joblib
