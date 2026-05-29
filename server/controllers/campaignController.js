@@ -71,7 +71,7 @@ export const createCampaign = async (req, res) => {
         let isFirstDonor = true; // משתנה כדי שלא נמתין סתם לפני התורם הראשון
 
         for (const donor of processingResult) {
-            if (!donor.personalityProfile || !donor.financialProfile) {
+            if (!donor.communicationProfile  || !donor.financialProfile) {
                 console.log(`⚠️ מדלג על ${donor.email}: חסרים נתוני AI (Personality/Financial).`);
                 continue;
             }
@@ -104,7 +104,7 @@ export const createCampaign = async (req, res) => {
             try {
                 // שליחה למודל האופטימיזציה
                 const personalizedData = await generateCampaignAgentData(
-                    donor.personalityProfile,
+                    donor.communicationProfile,
                     donor.financialProfile,
                     campaignData
                 );

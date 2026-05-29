@@ -222,7 +222,37 @@ export function buildDonorFeatures(enrichedResult) {
 
   const hasStrongProfessionalPresence =
     hasLinkedin && (followers >= 500 || connections >= 500);
+  const hasBusinessEmail = emailDomainType === "business";
 
+  const seniority_level =
+    isCEO || isCLevel ? 5 :
+      isDirector ? 4 :
+        isManager ? 3 :
+          isStudent ? 1 :
+            2;
+
+  const wealth_proxy_score =
+    hasLargeCompany ? 8 :
+      hasBusinessEmail ? 6 :
+        3;
+
+  const professional_presence_score =
+    hasStrongProfessionalPresence ? 8 :
+      hasLinkedin ? 6 :
+        2;
+
+  const data_confidence_score =
+    enrichedResult?.found ? 7 : 2;
+
+  const city_tier =
+    ["Tel Aviv", "Jerusalem"].includes(profile.city)
+      ? "high"
+      : profile.city
+        ? "medium"
+        : "unknown";
+
+  const companySizeBucket =
+    hasLargeCompany ? "large" : "unknown";
   return {
     fullName: input.fullName || profile.fullName || null,
     email: input.email || null,
@@ -234,8 +264,7 @@ export function buildDonorFeatures(enrichedResult) {
     emailDomainType,
 
     found: Boolean(enrichedResult?.found),
-    sourcesUsed: enrichedResult?.sourcesUsed || [],
-
+    
     linkedinUrl: profile.linkedinUrl || null,
     title: profile.title || null,
     headline: profile.headline || null,
@@ -248,15 +277,12 @@ export function buildDonorFeatures(enrichedResult) {
     companyLinkedinUrl: profile.companyLinkedinUrl || null,
 
     education: profile.education || null,
-    experience: profile.experience || [],
-    skills: profile.skills || [],
 
     followers,
     connections,
-    profiles: profile.profiles || [],
 
     hasLinkedin,
-    hasBusinessEmail: emailDomainType === "business",
+    hasBusinessEmail,
     hasVerifiedEmail: Boolean(profile.signals?.hasVerifiedEmail),
 
     isStudent,
@@ -285,6 +311,14 @@ export function buildDonorFeatures(enrichedResult) {
     hasCompanyLinkedin,
     hasLargeCompany,
     hasStartupSignal,
-    hasStrongProfessionalPresence
+    hasStrongProfessionalPresence,
+
+    age_estimate: 0,
+    city_tier,
+    companySizeBucket,
+    seniority_level,
+    wealth_proxy_score,
+    professional_presence_score,
+    data_confidence_score
   };
 }

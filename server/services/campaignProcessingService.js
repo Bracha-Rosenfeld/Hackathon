@@ -1,6 +1,7 @@
 import { enrichDonors } from "./enrichmentService.js";
 import { buildDonorFeatures } from "./donorFeatureService.js";
 import { processDonorAgentData } from "./donorAnalysisService.js"; 
+import { predictCommunicationProfile } from "./communicationProfileService.js";
 
 export async function processCampaignDonors(connection, companyId) {
   //שלב 1: שליפת התורמים מה-DB והעשרת המידע שלהם עם כל הפיצ'רים שצריך
@@ -46,28 +47,44 @@ export async function processCampaignDonors(connection, companyId) {
   const finalDonorsData = [];
   
   for (const donor of donorsFeatures) {
-    console.log(`⏳ Starting AI analysis for donor: ${donor.fullName}...`); 
-    
-    try {
-      const aiInsights = await processDonorAgentData(donor);
-      
-      console.log(`✅ Successfully generated AI insights for: ${donor.fullName}`); 
-      
-      finalDonorsData.push({
-        email: donor.email,
-        personalityProfile: aiInsights.personalityJson,
-        financialProfile: aiInsights.financialJson
-      });
-    } catch (error) {
-      console.error(`⚠️ Failed to process AI insights for donor: ${donor.fullName}`, error.message);
-      
-      finalDonorsData.push({ 
-        email: donor.email, 
-        personalityProfile: null, 
-        financialProfile: null 
-      });
-    }
+  console.log(`⏳ Starting AI analysis for donor: ${donor.fullName}...`);
+
+  console.log("📤 FEATURES SENT TO MODEL:");
+  console.log(JSON.stringify(donor, null, 2));
+
+  let communicationProfile = null;
+  let financialProfile = null;
+
+  try {
+    communicationProfile = await predictCommunicationProfile(donor);
+
+    console.log(`✅ Communication profile generated for: ${donor.fullName}`);
+  } catch (error) {
+    console.error(
+      `⚠️ Communication profile failed for donor: ${donor.fullName}`,
+      error.message
+    );
   }
+
+  try {
+    const aiInsights = await processDonorAgentData(donor);
+
+    financialProfile = aiInsights.financialJson;
+
+    console.log(`✅ Financial profile generated for: ${donor.fullName}`);
+  } catch (error) {
+    console.error(
+      `⚠️ Financial profile failed for donor: ${donor.fullName}`,
+      error.message
+    );
+  }
+
+  finalDonorsData.push({
+    email: donor.email,
+    communicationProfile,
+    financialProfile
+  });
+}
 
   console.log("✅ AI Processing finished for all donors.");
   

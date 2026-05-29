@@ -131,20 +131,22 @@ function mergeSignals(...profiles) {
 function mergeProfiles(...profiles) {
     const cleanProfiles = profiles.filter(Boolean);
 
-    const merged = cleanProfiles.reduce((result, profile) => {
-        const cleanEntries = Object.entries(profile).filter(
-            ([key, value]) =>
+    const merged = {};
+
+    for (const profile of cleanProfiles) {
+        for (const [key, value] of Object.entries(profile)) {
+            if (
                 key !== "signals" &&
                 value !== null &&
                 value !== undefined &&
                 value !== ""
-        );
-
-        return {
-            ...result,
-            ...Object.fromEntries(cleanEntries)
-        };
-    }, {});
+            ) {
+                if (!merged[key]) {
+                    merged[key] = value;
+                }
+            }
+        }
+    }
 
     return {
         ...merged,
@@ -178,7 +180,6 @@ export async function enrichPerson({ fullName, email, country = "Israel" }) {
         try {
             const tavilyResult = await findLinkedinProfileResult({
                 fullName,
-                englishName,
                 email,
                 country
             });

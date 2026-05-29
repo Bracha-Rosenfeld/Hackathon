@@ -80,7 +80,8 @@ export async function findLinkedinProfileResult({
       );
 
       const results = response.data.results || [];
-
+      // console.log("🔎 RAW RESULTS:");
+      // console.log(JSON.stringify(results, null, 2));
       const exactResult = results.find((result) =>
         isExactLinkedinProfileMatch(result, name)
       );
@@ -108,10 +109,9 @@ export async function findLinkedinProfileResult({
  * בונה שאילתת חיפוש:
  * "שם" "מייל" Israel LinkedIn site:linkedin.com/in
  */
-function buildLinkedinSearchQuery({ name, email, country }) {
+function buildLinkedinSearchQuery({ name, country }) {
   const parts = [
     name ? `"${name}"` : null,
-    email ? `"${email}"` : null,
     country || "Israel",
     "LinkedIn",
     "site:linkedin.com/in"
@@ -299,3 +299,16 @@ function transliterateHebrewWord(word) {
 
   return raw.charAt(0).toUpperCase() + raw.slice(1);
 }
+
+findLinkedinProfileResult({
+  fullName: "Tohar Amar",
+  country: "Israel"
+})
+  .then((res) => {
+    console.log("✅ TAVILY RESULT:");
+    console.log(JSON.stringify(res, null, 2));
+  })
+  .catch((err) => {
+    console.log("❌ TAVILY ERROR:");
+    console.log(err.response?.data || err.message);
+  });
