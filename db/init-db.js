@@ -96,29 +96,20 @@ await db.query(`
 await db.query(`
 CREATE TABLE personalized_landings (
   id INT AUTO_INCREMENT PRIMARY KEY,
-
   token VARCHAR(255) UNIQUE NOT NULL,
-
   donor_email VARCHAR(255),
-
   donor_name VARCHAR(255),
-
   company_name VARCHAR(255),
-
   company_logo VARCHAR(255),
-
   personalized_email TEXT,
-
+  punchline1 VARCHAR(255),
+  punchline2 VARCHAR(255),
+  category ENUM('student', 'executive', 'investor', 'tech', 'community', 'default') DEFAULT 'default',
   suggested_color VARCHAR(7),
-
   style_name VARCHAR(255),
-
   option1 INT,
-
   option2 INT,
-
   option3 INT,
-
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )
 `);
