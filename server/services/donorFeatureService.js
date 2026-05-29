@@ -29,6 +29,10 @@ function includesAny(text, words) {
   );
 }
 
+function clampScore(value, min = 1, max = 10) {
+  return Math.max(min, Math.min(max, Number(value.toFixed(2))));
+}
+
 export function buildDonorFeatures(enrichedResult) {
   const input = enrichedResult?.input || {};
   const profile = enrichedResult?.profile || {};
@@ -224,35 +228,82 @@ export function buildDonorFeatures(enrichedResult) {
     hasLinkedin && (followers >= 500 || connections >= 500);
   const hasBusinessEmail = emailDomainType === "business";
 
-  const seniority_level =
-    isCEO || isCLevel ? 5 :
-      isDirector ? 4 :
-        isManager ? 3 :
-          isStudent ? 1 :
-            2;
-
-  const wealth_proxy_score =
-    hasLargeCompany ? 8 :
-      hasBusinessEmail ? 6 :
-        3;
-
-  const professional_presence_score =
-    hasStrongProfessionalPresence ? 8 :
-      hasLinkedin ? 6 :
-        2;
-
-  const data_confidence_score =
-    enrichedResult?.found ? 7 : 2;
-
   const city_tier =
-    ["Tel Aviv", "Jerusalem"].includes(profile.city)
-      ? "high"
-      : profile.city
-        ? "medium"
-        : "unknown";
+  ["Tel Aviv", "Jerusalem", "Herzliya", "Ramat Gan", "Givatayim", "Ra'anana", "Raanana"].includes(profile.city)
+    ? "high"
+    : profile.city
+      ? "mid"
+      : "unknown";
 
-  const companySizeBucket =
-    hasLargeCompany ? "large" : "unknown";
+const seniority_level =
+  isCEO || isCLevel ? 5 :
+    isDirector ? 4 :
+      isManager ? 3 :
+        isStudent ? 1 :
+          2;
+
+let professionalPresence = 1;
+
+if (hasLinkedin) professionalPresence += 2;
+
+if (followers >= 100) professionalPresence += 0.5;
+if (followers >= 500) professionalPresence += 1;
+if (followers >= 1500) professionalPresence += 1.5;
+if (followers >= 3000) professionalPresence += 2;
+
+if (connections >= 100) professionalPresence += 0.5;
+if (connections >= 500) professionalPresence += 1;
+if (connections >= 1000) professionalPresence += 1.5;
+
+if (profile.title) professionalPresence += 1;
+if (profile.company) professionalPresence += 1;
+if (profile.headline) professionalPresence += 0.5;
+
+const professional_presence_score = clampScore(professionalPresence);
+
+let dataConfidence = 2;
+
+if (enrichedResult?.found) dataConfidence += 2;
+if (hasLinkedin) dataConfidence += 1.5;
+if (profile.title) dataConfidence += 1;
+if (profile.company) dataConfidence += 1;
+if (profile.city) dataConfidence += 0.7;
+if (profile.industry) dataConfidence += 0.7;
+if (hasBusinessEmail) dataConfidence += 1;
+if (profile.signals?.hasVerifiedEmail) dataConfidence += 0.8;
+
+const data_confidence_score = clampScore(dataConfidence);
+
+let wealthProxy = 2;
+
+wealthProxy += seniority_level * 0.75;
+wealthProxy += professional_presence_score * 0.25;
+
+if (isCEO) wealthProxy += 2;
+if (isFounder) wealthProxy += 1.7;
+if (isCLevel) wealthProxy += 1.5;
+if (isDirector) wealthProxy += 1;
+if (isManager) wealthProxy += 0.6;
+if (isOwner) wealthProxy += 1.5;
+
+if (isFinanceRelated) wealthProxy += 1.2;
+if (isRealEstateRelated) wealthProxy += 1.2;
+if (isMedicalRelated) wealthProxy += 0.7;
+if (isLegalRelated) wealthProxy += 0.6;
+
+if (hasLargeCompany) wealthProxy += 1.4;
+if (hasBusinessEmail) wealthProxy += 0.7;
+
+if (city_tier === "high") wealthProxy += 0.8;
+
+if (isStudent) wealthProxy -= 1.2;
+if (isPublicSector) wealthProxy -= 0.2;
+
+const wealth_proxy_score = clampScore(wealthProxy);
+
+const companySizeBucket =
+  hasLargeCompany ? "large" : "unknown";
+
   return {
     fullName: input.fullName || profile.fullName || null,
     email: input.email || null,
