@@ -8,8 +8,8 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-model = joblib.load("xgboost_multi_dim_regression_v2.joblib")
-training_columns = joblib.load("training_columns_v2.joblib")
+model = joblib.load("xgboost_multi_dim_regression_v3.joblib")
+training_columns = joblib.load("training_columns_v3.joblib")
 
 TARGET_COLS = [
     "emotion_level",
@@ -128,10 +128,12 @@ def predict():
         })
 
     except Exception as e:
+        print("❌ PREDICT ERROR:", str(e), flush=True)
+
         return jsonify({
             "success": False,
             "error": str(e)
-        }), 500
+            }), 500
 
 
 @app.route("/health", methods=["GET"])
