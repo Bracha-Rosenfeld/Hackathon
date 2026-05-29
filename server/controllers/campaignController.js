@@ -28,7 +28,7 @@ export const createCampaign = async (req, res) => {
         // שליפת פרטי החברה
         const [companyRows] = await db.query(
             `
-    SELECT company_name, logo_path
+    SELECT company_name, logo_path, company_color
     FROM companies
     WHERE id = ?
   `,
@@ -45,15 +45,18 @@ export const createCampaign = async (req, res) => {
         const companyDataFromDb = companyRows[0];
         const companyNameFromDb = companyDataFromDb.company_name;
         const companyLogoFromDb = companyDataFromDb.logo_path;
+        const companyColorFromDb = companyDataFromDb.company_color || '#1094A9'; // צבע ברירת מחדל אם ריק
         
         // 2. קריאה לפונקציית האייגנטים לקבלת נתוני אישיות ופיננסים
         console.log("🤖 מפעיל עיבוד תורמים (שלב 1: העשרה וניתוח)...");
 
+        // מעבירים גם את הצבע שהאייגנט של האופטימיזציה צריך עבור הפרומפט
         const campaignData = {
             campaignId: newCampaignId,
-            campaignName,
-            campaignGoal,
+            name: campaignName,
+            goal: campaignGoal,
             fundingTarget,
+            color: companyColorFromDb,
             companyId
         };
 
@@ -111,7 +114,11 @@ export const createCampaign = async (req, res) => {
 
                 const token = uuidv4();
 
-                // שמירה בבסיס הנתונים (שימוש ב-db הקיים)
+                // חילוץ בטוח של משפטי המחץ למקרה והמודל לא החזיר בדיוק מערך של 2
+                const punchline1 = personalizedData.punchlines?.[0] || '';
+                const punchline2 = personalizedData.punchlines?.[1] || '';
+
+                // שמירה בבסיס הנתונים כולל השדות החדשים
                 await db.query(
                     `
 INSERT INTO personalized_landings
@@ -122,13 +129,16 @@ INSERT INTO personalized_landings
   company_name,
   company_logo,
   personalized_email,
+  punchline1,
+  punchline2,
+  category,
   suggested_color,
   style_name,
   option1,
   option2,
   option3
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
 [
   token,
@@ -137,6 +147,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   companyNameFromDb,
   companyLogoFromDb,
   personalizedData.personalizedEmail,
+  punchline1,
+  punchline2,
+  personalizedData.category,
   personalizedData.suggestedColor,
   personalizedData.styleName,
   personalizedData.threePriceOptions[0],
@@ -151,7 +164,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 landingLinks.push({ 
                     name: donorName || 'תורם ללא שם', 
                     email: donor.email, 
-                    link: landingLink 
+                    link: landingLink,
+                    category: personalizedData.category // נחזיר את זה גם בריספונס של ה-API שיהיה לכם נוח ב-Client
                 });
             } catch (innerError) {
                 console.error(`❌ שגיאה ביצירת דף מותאם עבור ${donor.email}:`, innerError.message);
