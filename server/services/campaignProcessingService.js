@@ -1,10 +1,9 @@
 import { enrichDonors } from "./enrichmentService.js";
 import { buildDonorFeatures } from "./donorFeatureService.js";
-import { processDonorAgentData } from "./donorAnalysisService.js"; 
+import { processDonorAgentData } from "./donorAnalysisService.js";
 import { predictCommunicationProfile } from "./communicationProfileService.js";
 
 export async function processCampaignDonors(connection, companyId) {
-  //שלב 1: שליפת התורמים מה-DB והעשרת המידע שלהם עם כל הפיצ'רים שצריך
   console.log("🤖 Fetching donors for company:", companyId);
 
   const [donorsRows] = await connection.query(
@@ -29,7 +28,7 @@ export async function processCampaignDonors(connection, companyId) {
     fullName: donor.full_name,
     email: donor.email,
     idNumber: donor.tz_number,
-    country: "Israel"
+    country: "Israel",
   }));
 
   console.log("🤖 Running enrichment...");
@@ -41,54 +40,60 @@ export async function processCampaignDonors(connection, companyId) {
   );
 
   console.log("✅ Enrichment finished");
-  //שלב 2: העברת הגייסון הענק לAI שיחזיר לי עבור כל אחד 2 ניתוחים: פרסונליות ופיננסי
+
   console.log("🧠 Processing AI insights for each donor...");
 
   const finalDonorsData = [];
-  
+
   for (const donor of donorsFeatures) {
-  console.log(`⏳ Starting AI analysis for donor: ${donor.fullName}...`);
+    console.log(`⏳ Starting AI analysis for donor: ${donor.fullName}...`);
 
-  console.log("📤 FEATURES SENT TO MODEL:");
-  console.log(JSON.stringify(donor, null, 2));
+    console.log("📤 FEATURES SENT TO MODEL:");
+    console.log(JSON.stringify(donor, null, 2));
 
-  let communicationProfile = null;
-  let financialProfile = null;
+    let communicationProfile = null;
+    let financialProfile = null;
 
-  try {
-    communicationProfile = await predictCommunicationProfile(donor);
+    try {
+      communicationProfile = await predictCommunicationProfile(donor);
 
-    console.log(`✅ Communication profile generated for: ${donor.fullName}`);
-  } catch (error) {
-    console.error(
-      `⚠️ Communication profile failed for donor: ${donor.fullName}`,
-      error.message
-    );
+      console.log(`✅ Communication profile generated for: ${donor.fullName}`);
+    } catch (error) {
+      console.error(
+        `⚠️ Communication profile failed for donor: ${donor.fullName}`,
+        error.message
+      );
+    }
+
+    try {
+      const aiInsights = await processDonorAgentData(donor);
+
+      financialProfile = aiInsights.financialJson;
+
+      console.log(`✅ Financial profile generated for: ${donor.fullName}`);
+    } catch (error) {
+      console.error(
+        `⚠️ Financial profile failed for donor: ${donor.fullName}`,
+        error.message
+      );
+    }
+
+    finalDonorsData.push({
+      email: donor.email,
+      fullName: donor.fullName,
+
+      // מה שהיה עד עכשיו
+      communicationProfile,
+      financialProfile,
+
+      // חדש: כל הדאטה המקורי/מועשר לפני יצירת דף הנחיתה
+      donorFeatures: donor,
+    });
   }
-
-  try {
-    const aiInsights = await processDonorAgentData(donor);
-
-    financialProfile = aiInsights.financialJson;
-
-    console.log(`✅ Financial profile generated for: ${donor.fullName}`);
-  } catch (error) {
-    console.error(
-      `⚠️ Financial profile failed for donor: ${donor.fullName}`,
-      error.message
-    );
-  }
-
-  finalDonorsData.push({
-    email: donor.email,
-    communicationProfile,
-    financialProfile
-  });
-}
 
   console.log("✅ AI Processing finished for all donors.");
-  
-  console.log("📊 Final Processed Data (Email + 2 JSONs):");
+
+  console.log("📊 Final Processed Data:");
   console.log(JSON.stringify(finalDonorsData, null, 2));
 
   return finalDonorsData;

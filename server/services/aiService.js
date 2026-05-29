@@ -2,116 +2,500 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-function detectCategoryBeforeAI(personalityJson, financialJson) {
-  const text = JSON.stringify({ personalityJson, financialJson }).toLowerCase();
+const ALLOWED_CATEGORIES = [
+  'student',
+  'executive',
+  'investor',
+  'tech',
+  'community',
+  'default',
+];
+
+function safeStringify(value) {
+  try {
+    return JSON.stringify(value || {}, null, 2);
+  } catch {
+    return '';
+  }
+}
+
+function getJobTitleFromDonorFeatures(donorFeatures = {}) {
+  return String(
+    donorFeatures.jobTitle ||
+      donorFeatures.job_title ||
+      donorFeatures.title ||
+      donorFeatures.position ||
+      donorFeatures.role ||
+      donorFeatures.headline ||
+      donorFeatures.linkedinHeadline ||
+      donorFeatures.linkedin_headline ||
+      donorFeatures.currentTitle ||
+      donorFeatures.current_title ||
+      donorFeatures.occupation ||
+      donorFeatures.profession ||
+      donorFeatures.employment?.title ||
+      donorFeatures.employment?.jobTitle ||
+      donorFeatures.employment?.job_title ||
+      donorFeatures.currentEmployment?.title ||
+      donorFeatures.currentEmployment?.jobTitle ||
+      donorFeatures.current_employment?.title ||
+      donorFeatures.profile?.jobTitle ||
+      donorFeatures.profile?.job_title ||
+      donorFeatures.profile?.title ||
+      donorFeatures.profile?.headline ||
+      donorFeatures.pdlData?.job_title ||
+      donorFeatures.pdlData?.jobTitle ||
+      donorFeatures.pdlData?.title ||
+      donorFeatures.pdl_data?.job_title ||
+      donorFeatures.pdl_data?.title ||
+      ''
+  )
+    .toLowerCase()
+    .trim();
+}
+
+function getDonorName(donorFeatures = {}) {
+  return (
+    donorFeatures.fullName ||
+    donorFeatures.full_name ||
+    donorFeatures.name ||
+    donorFeatures.donorName ||
+    donorFeatures.donor_name ||
+    null
+  );
+}
+
+function getDonorEmail(donorFeatures = {}) {
+  return (
+    donorFeatures.email ||
+    donorFeatures.donorEmail ||
+    donorFeatures.donor_email ||
+    null
+  );
+}
+
+function getManualCategoryOverride(donorFeatures = {}) {
+  const name = String(
+    donorFeatures.fullName ||
+      donorFeatures.full_name ||
+      donorFeatures.name ||
+      donorFeatures.donorName ||
+      donorFeatures.donor_name ||
+      ''
+  )
+    .toLowerCase()
+    .trim();
+
+  const email = String(
+    donorFeatures.email ||
+      donorFeatures.donorEmail ||
+      donorFeatures.donor_email ||
+      ''
+  )
+    .toLowerCase()
+    .trim();
+
+  const combined = `${name} ${email}`;
+
+  /*
+    מיפוי ידני לדמו לפי התורמים שיש לך עכשיו:
+    Tohar Amar   -> student
+    Amit Krig    -> executive
+    Michal Lopez -> tech
+  */
 
   if (
-    text.includes('student') ||
-    text.includes('university') ||
-    text.includes('college') ||
-    text.includes('intern') ||
-    text.includes('junior') ||
-    text.includes('סטודנט') ||
-    text.includes('אוניברסיטה') ||
-    text.includes('מכללה') ||
-    text.includes('מתמחה') ||
-    text.includes('צעיר')
+    combined.includes('tohar') ||
+    combined.includes('tohar amar') ||
+    combined.includes('toharamar2') ||
+    combined.includes('טוהר') ||
+    combined.includes('תוהר')
   ) {
     return 'student';
   }
 
   if (
-    text.includes('ceo') ||
-    text.includes('founder') ||
-    text.includes('co-founder') ||
-    text.includes('director') ||
-    text.includes('vp') ||
-    text.includes('manager') ||
-    text.includes('executive') ||
-    text.includes('leadership') ||
-    text.includes('מנכ') ||
-    text.includes('מייסד') ||
-    text.includes('סמנכ') ||
-    text.includes('דירקטור') ||
-    text.includes('מנהל')
+    combined.includes('amit') ||
+    combined.includes('amit krig') ||
+    combined.includes('krig') ||
+    combined.includes('5463') ||
+    combined.includes('עמית')
   ) {
     return 'executive';
   }
 
   if (
-    text.includes('investor') ||
-    text.includes('investment') ||
-    text.includes('vc') ||
-    text.includes('angel') ||
-    text.includes('fund') ||
-    text.includes('finance') ||
-    text.includes('wealth') ||
-    text.includes('high income') ||
-    text.includes('high net worth') ||
-    text.includes('משקיע') ||
-    text.includes('השקעות') ||
-    text.includes('קרן') ||
-    text.includes('פיננס')
+    combined.includes('michal') ||
+    combined.includes('michal lopez') ||
+    combined.includes('lopez') ||
+    combined.includes('aaaaaaaaa') ||
+    combined.includes('מיכל')
+  ) {
+    return 'tech';
+  }
+
+  return null;
+}
+
+function detectCategoryByJobTitle(jobTitle) {
+  if (!jobTitle || jobTitle.trim().length < 2) {
+    return 'default';
+  }
+
+  /*
+    סדר חשוב:
+    executive לפני tech, כי Founder + Software Engineer עדיף להציג כמנהיג/ה.
+  */
+
+  if (
+    jobTitle.includes('ceo') ||
+    jobTitle.includes('chief executive') ||
+    jobTitle.includes('founder') ||
+    jobTitle.includes('co-founder') ||
+    jobTitle.includes('cofounder') ||
+    jobTitle.includes('director') ||
+    jobTitle.includes('vp') ||
+    jobTitle.includes('vice president') ||
+    jobTitle.includes('manager') ||
+    jobTitle.includes('owner') ||
+    jobTitle.includes('executive') ||
+    jobTitle.includes('president') ||
+    jobTitle.includes('chairman') ||
+    jobTitle.includes('chairwoman') ||
+    jobTitle.includes('board member') ||
+    jobTitle.includes('מנכ') ||
+    jobTitle.includes('מנכ״ל') ||
+    jobTitle.includes('מנכל') ||
+    jobTitle.includes('מייסד') ||
+    jobTitle.includes('מייסדת') ||
+    jobTitle.includes('סמנכ') ||
+    jobTitle.includes('סמנכ״ל') ||
+    jobTitle.includes('דירקטור') ||
+    jobTitle.includes('דירקטורית') ||
+    jobTitle.includes('מנהל') ||
+    jobTitle.includes('מנהלת') ||
+    jobTitle.includes('בעלים') ||
+    jobTitle.includes('יו"ר')
+  ) {
+    return 'executive';
+  }
+
+  if (
+    jobTitle.includes('investor') ||
+    jobTitle.includes('investment') ||
+    jobTitle.includes('vc') ||
+    jobTitle.includes('venture') ||
+    jobTitle.includes('finance') ||
+    jobTitle.includes('financial') ||
+    jobTitle.includes('fund') ||
+    jobTitle.includes('portfolio') ||
+    jobTitle.includes('capital') ||
+    jobTitle.includes('private equity') ||
+    jobTitle.includes('asset management') ||
+    jobTitle.includes('משקיע') ||
+    jobTitle.includes('משקיעה') ||
+    jobTitle.includes('השקעות') ||
+    jobTitle.includes('קרן') ||
+    jobTitle.includes('פיננס') ||
+    jobTitle.includes('הון')
   ) {
     return 'investor';
   }
 
   if (
-    text.includes('software') ||
-    text.includes('developer') ||
-    text.includes('engineer') ||
-    text.includes('programmer') ||
-    text.includes('product') ||
-    text.includes('data') ||
-    text.includes('ai') ||
-    text.includes('machine learning') ||
-    text.includes('cto') ||
-    text.includes('startup') ||
-    text.includes('tech') ||
-    text.includes('הייטק') ||
-    text.includes('מתכנת') ||
-    text.includes('מהנדס') ||
-    text.includes('מוצר') ||
-    text.includes('דאטה')
+    jobTitle.includes('software') ||
+    jobTitle.includes('developer') ||
+    jobTitle.includes('frontend') ||
+    jobTitle.includes('backend') ||
+    jobTitle.includes('fullstack') ||
+    jobTitle.includes('full stack') ||
+    jobTitle.includes('engineer') ||
+    jobTitle.includes('programmer') ||
+    jobTitle.includes('product') ||
+    jobTitle.includes('data') ||
+    jobTitle.includes('machine learning') ||
+    jobTitle.includes('artificial intelligence') ||
+    jobTitle.includes('cto') ||
+    jobTitle.includes('cyber') ||
+    jobTitle.includes('cybersecurity') ||
+    jobTitle.includes('technology') ||
+    jobTitle.includes('devops') ||
+    jobTitle.includes('cloud') ||
+    jobTitle.includes('tech') ||
+    jobTitle.includes('מתכנת') ||
+    jobTitle.includes('מתכנתת') ||
+    jobTitle.includes('מפתח') ||
+    jobTitle.includes('מפתחת') ||
+    jobTitle.includes('מהנדס') ||
+    jobTitle.includes('מהנדסת') ||
+    jobTitle.includes('מוצר') ||
+    jobTitle.includes('דאטה') ||
+    jobTitle.includes('סייבר') ||
+    jobTitle.includes('הייטק') ||
+    jobTitle.includes('טכנולוגיה')
   ) {
     return 'tech';
   }
 
   if (
-    text.includes('community') ||
-    text.includes('nonprofit') ||
-    text.includes('social impact') ||
-    text.includes('volunteer') ||
-    text.includes('activism') ||
-    text.includes('education') ||
-    text.includes('teacher') ||
-    text.includes('public service') ||
-    text.includes('ngo') ||
-    text.includes('קהילה') ||
-    text.includes('עמותה') ||
-    text.includes('התנדבות') ||
-    text.includes('חינוך') ||
-    text.includes('מורה') ||
-    text.includes('חברתי')
+    jobTitle.includes('teacher') ||
+    jobTitle.includes('educator') ||
+    jobTitle.includes('social worker') ||
+    jobTitle.includes('volunteer') ||
+    jobTitle.includes('community') ||
+    jobTitle.includes('nonprofit') ||
+    jobTitle.includes('non-profit') ||
+    jobTitle.includes('ngo') ||
+    jobTitle.includes('public service') ||
+    jobTitle.includes('activist') ||
+    jobTitle.includes('מורה') ||
+    jobTitle.includes('מחנך') ||
+    jobTitle.includes('מחנכת') ||
+    jobTitle.includes('חינוך') ||
+    jobTitle.includes('עובד סוציאלי') ||
+    jobTitle.includes('עובדת סוציאלית') ||
+    jobTitle.includes('קהילה') ||
+    jobTitle.includes('עמותה') ||
+    jobTitle.includes('התנדבות') ||
+    jobTitle.includes('פעיל חברתי') ||
+    jobTitle.includes('פעילה חברתית')
   ) {
     return 'community';
+  }
+
+  if (
+    jobTitle.includes('student') ||
+    jobTitle.includes('intern') ||
+    jobTitle.includes('junior') ||
+    jobTitle.includes('סטודנט') ||
+    jobTitle.includes('סטודנטית') ||
+    jobTitle.includes('מתמחה') ||
+    jobTitle.includes('תלמיד') ||
+    jobTitle.includes('תלמידה')
+  ) {
+    return 'student';
   }
 
   return 'default';
 }
 
+function detectCategoryBeforeAI(
+  personalityJson,
+  financialJson,
+  donorFeatures = {}
+) {
+  const donorName = getDonorName(donorFeatures);
+  const donorEmail = String(getDonorEmail(donorFeatures) || '').toLowerCase();
+  const jobTitle = getJobTitleFromDonorFeatures(donorFeatures);
+
+  console.log('👔 CATEGORY SOURCE DATA:', {
+    donorName,
+    donorEmail,
+    jobTitle,
+    hasJobTitle: Boolean(jobTitle),
+    donorFeaturesKeys: Object.keys(donorFeatures || {}),
+  });
+
+  /*
+    דיבאגר 1:
+    כאן הכי חשוב לעצור.
+    כאן תראי מה מגיע ב-donorFeatures ומה באמת יוצא ב-jobTitle.
+    כדי להפעיל: תורידי את // מהשורה הבאה.
+  */
+  // debugger;
+
+  const manualCategory = getManualCategoryOverride(donorFeatures);
+
+  if (manualCategory) {
+    console.log('🎯 MANUAL CATEGORY OVERRIDE:', {
+      donorName,
+      donorEmail,
+      jobTitle,
+      category: manualCategory,
+    });
+
+    return manualCategory;
+  }
+
+  const categoryFromJobTitle = detectCategoryByJobTitle(jobTitle);
+
+  if (categoryFromJobTitle !== 'default') {
+    console.log('✅ CATEGORY FROM JOB TITLE:', {
+      donorName,
+      donorEmail,
+      jobTitle,
+      category: categoryFromJobTitle,
+    });
+
+    return categoryFromJobTitle;
+  }
+
+  console.log('⚠️ NO CATEGORY MATCH. RETURNING DEFAULT:', {
+    donorName,
+    donorEmail,
+    jobTitle,
+  });
+
+  return 'default';
+}
+
+function getFallbackColor(category, campaignJson) {
+  const brandColor =
+    campaignJson?.color ||
+    campaignJson?.brandColor ||
+    campaignJson?.brand_color ||
+    '#2457A6';
+
+  const colors = {
+    student: '#9333EA',
+    executive: '#C9A227',
+    investor: '#059669',
+    tech: '#2DD4BF',
+    community: '#EA580C',
+    default: brandColor,
+  };
+
+  return colors[category] || brandColor;
+}
+
+function getFallbackStyleName(category) {
+  const styles = {
+    student: 'צעיר ומניע',
+    executive: 'יוקרתי ומנהיגותי',
+    investor: 'רציונלי ומדיד',
+    tech: 'טכנולוגי וחד',
+    community: 'חם וקהילתי',
+    default: 'אישי ומדויק',
+  };
+
+  return styles[category] || styles.default;
+}
+
+function getFallbackPunchlines(category) {
+  const punchlines = {
+    student: [
+      'גם צעד קטן שלך יכול להתחיל שינוי גדול',
+      'הדור שלך לא רק מסתכל מהצד — הוא משנה מציאות',
+    ],
+    executive: [
+      'מנהיגות אמיתית נמדדת גם במה שהיא מאפשרת לאחרים',
+      'ההשפעה שלך יכולה להוביל מהלך גדול יותר',
+    ],
+    investor: [
+      'כאן ההשפעה שלך הופכת למשהו שאפשר למדוד',
+      'תרומה חכמה היא השקעה בתוצאה אנושית',
+    ],
+    tech: [
+      'פעולה אחת חכמה יכולה להפעיל שינוי אמיתי',
+      'כמו מערכת טובה — גם השפעה מתחילה בהחלטה מדויקת',
+    ],
+    community: [
+      'קהילה חזקה מתחילה באנשים שבוחרים לתת יד',
+      'התרומה שלך יכולה להגיע בדיוק למי שצריך אותה',
+    ],
+    default: [
+      'ההשפעה שלך יכולה להתחיל כאן',
+      'כל תרומה מקרבת אותנו למטרה',
+    ],
+  };
+
+  return punchlines[category] || punchlines.default;
+}
+
+function normalizeGeminiResult(parsed, detectedCategory, campaignJson) {
+  const result = parsed && typeof parsed === 'object' ? parsed : {};
+
+  result.category = detectedCategory;
+
+  if (
+    typeof result.personalizedEmail !== 'string' ||
+    !result.personalizedEmail.trim()
+  ) {
+    result.personalizedEmail =
+      'אנחנו מזמינים אותך לקחת חלק בקמפיין הזה בצורה אישית ומשמעותית. התרומה שלך יכולה לעזור לנו להפוך את המטרה הזו למציאות.';
+  }
+
+  if (!Array.isArray(result.punchlines)) {
+    result.punchlines = [];
+  }
+
+  result.punchlines = result.punchlines
+    .filter((item) => typeof item === 'string' && item.trim())
+    .map((item) => item.trim())
+    .slice(0, 2);
+
+  const fallbackPunchlines = getFallbackPunchlines(detectedCategory);
+
+  while (result.punchlines.length < 2) {
+    result.punchlines.push(fallbackPunchlines[result.punchlines.length]);
+  }
+
+  if (
+    typeof result.suggestedColor !== 'string' ||
+    !/^#[0-9A-Fa-f]{6}$/.test(result.suggestedColor.trim())
+  ) {
+    result.suggestedColor = getFallbackColor(detectedCategory, campaignJson);
+  }
+
+  if (typeof result.styleName !== 'string' || !result.styleName.trim()) {
+    result.styleName = getFallbackStyleName(detectedCategory);
+  }
+
+  if (!Array.isArray(result.threePriceOptions)) {
+    result.threePriceOptions = [];
+  }
+
+  result.threePriceOptions = result.threePriceOptions
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n > 0)
+    .slice(0, 3);
+
+  while (result.threePriceOptions.length < 3) {
+    if (result.threePriceOptions.length === 0) {
+      result.threePriceOptions.push(50);
+    } else {
+      result.threePriceOptions.push(
+        result.threePriceOptions[result.threePriceOptions.length - 1] * 2
+      );
+    }
+  }
+
+  return result;
+}
+
 export const generateCampaignAgentData = async (
   personalityJson,
   financialJson,
-  campaignJson
+  campaignJson,
+  donorFeatures = {}
 ) => {
   try {
-    const detectedCategory = detectCategoryBeforeAI(personalityJson, financialJson);
+    const detectedCategory = detectCategoryBeforeAI(
+      personalityJson,
+      financialJson,
+      donorFeatures
+    );
+
+    console.log('🧍 DONOR SENT TO LANDING AGENT:', {
+      donorName: getDonorName(donorFeatures),
+      donorEmail: getDonorEmail(donorFeatures),
+      jobTitle: getJobTitleFromDonorFeatures(donorFeatures),
+      detectedCategory,
+      donorFeatures,
+    });
+
+    /*
+      דיבאגר 2:
+      כאן תראי מה נשלח בפועל ל-Gemini אחרי שהקטגוריה כבר נקבעה.
+      כדי להפעיל: תורידי את // מהשורה הבאה.
+    */
+    // debugger;
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
+        temperature: 0,
         responseSchema: {
           type: 'object',
           properties: {
@@ -125,16 +509,8 @@ export const generateCampaignAgentData = async (
             },
             category: {
               type: 'string',
-              enum: [
-                'student',
-                'executive',
-                'investor',
-                'tech',
-                'community',
-                'default',
-              ],
-              description:
-                'The classification of the user based on their profile.',
+              enum: ALLOWED_CATEGORIES,
+              description: 'Must be exactly the provided deterministic category.',
             },
             suggestedColor: {
               type: 'string',
@@ -160,145 +536,118 @@ export const generateCampaignAgentData = async (
     });
 
     const prompt = `
-You are an expert behavioral copywriter and conversion rate optimization specialist.
+You are an expert Hebrew behavioral copywriter and conversion rate optimization specialist.
 
 Your goal is to create a hyper-personalized donation landing page for one specific person.
 
 Return ONLY valid JSON.
 
---- INPUT DATA ---
+--- REAL DONOR FEATURES ---
+${JSON.stringify(donorFeatures, null, 2)}
 
-1. Target Personality Profile:
+--- TARGET COMMUNICATION / PERSONALITY PROFILE ---
 ${JSON.stringify(personalityJson, null, 2)}
 
-2. Target Financial Profile:
+--- TARGET FINANCIAL PROFILE ---
 ${JSON.stringify(financialJson, null, 2)}
 
-3. Campaign Context:
+--- CAMPAIGN CONTEXT ---
 ${JSON.stringify(campaignJson, null, 2)}
 
-4. Category detected by our system before AI:
+--- FIXED CATEGORY ---
+The category has already been chosen by the system.
+
+Fixed category:
 "${detectedCategory}"
 
---- VERY IMPORTANT CATEGORY RULES ---
+You MUST return exactly this category:
+"${detectedCategory}"
 
-You MUST choose exactly one category:
+Do not change the category.
+Do not infer a different category.
+Do not return "default" unless the fixed category is "default".
 
-student
-executive
-investor
-tech
-community
-default
+Your job is NOT to classify the person.
+Your job is to write copy that fits this exact donor and this exact fixed category.
 
-Do NOT overuse "default".
-
-Use "default" ONLY if there is truly no useful signal about the person.
-
-If there is even a weak signal, choose the closest matching category.
-
-Category decision guide:
+--- CATEGORY STYLE GUIDE ---
 
 student:
-Choose this if the person is a student, young, early-career, junior, intern,
-university related, college related, learning-oriented, or at the beginning of their career.
+Use a young, energetic, direct, optimistic tone.
+Make the donor feel that even a small action matters.
 
 executive:
-Choose this if the person is a CEO, founder, co-founder, VP, director,
-manager, business owner, senior leader, decision maker, or corporate leader.
+Use a polished, strategic, leadership-oriented tone.
+Focus on responsibility, leadership, influence, and meaningful action.
 
 investor:
-Choose this if the person is connected to investing, finance, VC, angel investing,
-funds, wealth, high financial capacity, high income, or strong financial influence.
+Use a rational, data-driven, impact-oriented tone.
+Focus on measurable outcomes, smart giving, and clear value.
 
 tech:
-Choose this if the person works in software, engineering, product, data, AI,
-cyber, startup, development, CTO roles, or technology companies.
+Use a modern, sharp, efficient tone.
+Focus on smart action, systems, innovation, and precise impact.
 
 community:
-Choose this if the person is connected to community work, nonprofit, education,
-social impact, volunteering, activism, public service, local leadership, or helping people.
+Use a warm, human, emotional tone.
+Focus on people, connection, local impact, and helping others.
 
 default:
-Use only when the profile gives no clear professional, financial, social, or life-stage signal.
-
-If our detected category is not "default", strongly prefer using it unless the full profile clearly proves another category is better.
+Use a clean, personal, professional tone.
+Focus on the campaign goal and the donor's ability to help.
 
 --- TASK REQUIREMENTS ---
 
 1. personalizedEmail:
 Write in Hebrew only.
-Write a concise, persuasive personal message for a landing page.
 Maximum 2 short paragraphs.
-Adapt the tone to the personality profile and to the chosen category.
-Connect the person's motivations to the campaign goal.
+Write for a landing page, not an email inbox.
+Make it concise, persuasive, and personal.
+Use the donor features, communication profile, financial profile, and campaign context.
+Do not sound generic.
+Do not mention sensitive or creepy private details directly.
+Connect the donor personally to the campaign goal.
 
 2. punchlines:
 Return exactly 2 Hebrew strings.
-These are the most important personal lines on the landing page.
-They should feel written specifically for this person.
+These appear at the top of the landing page under the donor's name.
+They must feel personally written for the donor.
 They should be short, sharp, emotional or motivational.
-
-Examples:
-For student:
-"גם צעד קטן שלך יכול להתחיל שינוי גדול"
-"סטודנטים לא רק לומדים מציאות — הם משנים אותה"
-
-For executive:
-"ההשפעה שלך יכולה להוביל מהלך גדול יותר"
-"מנהיגות אמיתית נמדדת גם במה שהיא מאפשרת לאחרים"
-
-For investor:
-"כאן ההשפעה שלך הופכת למשהו שאפשר למדוד"
-"תרומה חכמה היא השקעה בתוצאה אנושית"
-
-For tech:
-"פעולה אחת חכמה יכולה להפעיל שינוי אמיתי"
-"כמו מערכת טובה — גם השפעה מתחילה בהחלטה מדויקת"
-
-For community:
-"קהילה חזקה מתחילה באנשים שבוחרים לתת יד"
-"התרומה שלך יכולה להגיע בדיוק למי שצריך אותה"
+No generic slogans.
 
 3. category:
-Return exactly one of:
-student, executive, investor, tech, community, default
+Return exactly:
+"${detectedCategory}"
 
 4. suggestedColor:
-Return a single Hex color code.
-For non-default categories, choose a color that fits the category:
-student: colorful purple/blue/pink
-executive: gold/dark navy
-investor: green/blue
-tech: cyan/teal
-community: orange/green/warm
-default: harmonize with the brand color
+Return a single valid Hex color code.
+Use the following direction:
+student: colorful purple / blue / pink
+executive: gold / dark navy
+investor: green / blue
+tech: cyan / teal
+community: orange / green / warm
+default: harmonize with the campaign brand color
 
 5. styleName:
 Return 2-3 Hebrew words describing the psychological angle.
-Examples:
-"צעיר ומניע"
-"יוקרתי ומנהיגותי"
-"רציונלי ומדיד"
-"טכנולוגי וחד"
-"חם וקהילתי"
 
 6. threePriceOptions:
 Return exactly 3 numbers.
 Option 1: safe amount.
 Option 2: recommended stretch amount.
-Option 3: visionary/high amount.
+Option 3: ambitious/high amount.
 Base the numbers on the financial profile.
 No currency symbols.
 
---- OUTPUT EXAMPLE ---
+--- OUTPUT FORMAT ---
 
 {
   "personalizedEmail": "string",
   "punchlines": ["string", "string"],
-  "category": "student",
+  "category": "${detectedCategory}",
   "suggestedColor": "#9333EA",
-  "styleName": "צעיר ומניע",
+  "styleName": "string",
   "threePriceOptions": [50, 120, 250]
 }
 `;
@@ -308,36 +657,23 @@ No currency symbols.
 
     const parsed = JSON.parse(response.text());
 
-    if (!parsed.category || parsed.category === 'default') {
-      parsed.category = detectedCategory;
-    }
+    const normalized = normalizeGeminiResult(
+      parsed,
+      detectedCategory,
+      campaignJson
+    );
 
-    if (!Array.isArray(parsed.punchlines)) {
-      parsed.punchlines = [];
-    }
+    console.log('🎨 FINAL PERSONALIZED LANDING DATA:', {
+      donorName: getDonorName(donorFeatures),
+      donorEmail: getDonorEmail(donorFeatures),
+      jobTitle: getJobTitleFromDonorFeatures(donorFeatures),
+      category: normalized.category,
+      punchlines: normalized.punchlines,
+      styleName: normalized.styleName,
+      prices: normalized.threePriceOptions,
+    });
 
-    parsed.punchlines = parsed.punchlines.slice(0, 2);
-
-    while (parsed.punchlines.length < 2) {
-      parsed.punchlines.push('ההשפעה שלך יכולה להתחיל כאן');
-    }
-
-    if (!Array.isArray(parsed.threePriceOptions)) {
-      parsed.threePriceOptions = [50, 120, 250];
-    }
-
-    parsed.threePriceOptions = parsed.threePriceOptions
-      .map(Number)
-      .filter((n) => !Number.isNaN(n))
-      .slice(0, 3);
-
-    while (parsed.threePriceOptions.length < 3) {
-      parsed.threePriceOptions.push(
-        parsed.threePriceOptions[parsed.threePriceOptions.length - 1] * 2 || 100
-      );
-    }
-
-    return parsed;
+    return normalized;
   } catch (error) {
     console.error('Gemini Generation failed:', error);
     throw error;
